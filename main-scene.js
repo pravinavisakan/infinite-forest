@@ -2,7 +2,7 @@ import {tiny, defs} from './common.js';
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Cube, Subdivision_Sphere, Transforms_Sandbox_Base } = defs;
+const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, } = defs;
 
 // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
 // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
@@ -16,11 +16,36 @@ class Test_Scene extends Scene
   {
 	super();
 	this.box = new Cube();
-	this.plant = new LSystemPlant(5);
-	const phong_shader      = new defs.Phong_Shader  (2);
-    this.materials = { plastic: new Material( phong_shader, 
-                     	{ ambient: 0.5, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),
-                     };
+
+	const phong_shader = new defs.Phong_Shader  (2);
+    this.materials = { plastic: new Material( phong_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),};
+
+
+	// Plant generation testing
+
+	// test string - from "binary tree" grammaar, 3rd recursion
+	const testString = "1111[11[1[0]0]1[0]0]11[1[0]0]1[0]0";
+
+	// helper function that curries the most common plant generation function - returning a shape, and modifying the matrix
+	// assumes Function.call is used, to allow insertion into this shape's object buffer
+	// takes in the shape class to be inserted (shape), arguments for that shape (shape_args), the matrix for that shape, and the transformation )
+	const insertShape = (shape, shape_args, shape_transform, transformation) => {
+		return (model_transform) => {
+			shape.insert_transformed_copy_into(this, shape_args, shape_transform);
+			model_transform.times(transformation);
+		}
+	}
+
+	// maps string symbols to transformations appropriate for that symbol 
+	// Cylinder params [1,10, [[0,10],[0,10]]]
+	const testSymbolMapping = {
+		"1":insertShape(Cube, [], Mat4.translation([0,1,0]), Mat4.translation([0,2,0])),
+		"0":insertShape(Triangle, [], Mat4.identity, Mat4.translation([0,2,0])),
+		"[":(model_transform) => model_transform.times(Mat4.rotation(Math.PI/2, Vec.of(0,1,0))),
+		"]":(model_transform) => model_transform.times(Mat4.rotation(Math.PI/2, Vec.of(0,1,0))),
+	}
+
+    this.plant = new LSystemPlant(testSymbolMapping, testString);
   }
 
   display( context, program_state )
@@ -52,40 +77,33 @@ class Test_Scene extends Scene
 	let model_transform = Mat4.identity();
 
     this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
+
+    // draw a plant
 	this.plant.draw(context, program_state, model_transform, this.materials.plastic);
       
   }
 }
 
-
+// Creates a single plant shape, given a string of symbols and a mapping of symbols to basic shapes
 const LSystemPlant = defs.LSystemPlant =
 class LSystemPlant extends Shape
 {
-  constructor( num_blades)
-  { 
-      super( "position", "normal", "texture_coord" );
-      for( let i = 0; i < num_blades; i++ )
-        {                                      // Rotate around a few degrees in the XZ plane to place each new point:
-          const spin = Mat4.rotation( i * 2*Math.PI/num_blades, Vec.of( 0,1,0 ) );
-                                               // Apply that XZ rotation matrix to point (1,0,0) of the base triangle.
-          const newPoint  = spin.times( Vec.of( 1,0,0,1 ) ).to3();
-          const triangle = [ newPoint,                      // Store that XZ position as point 1.
-                             newPoint.plus( [ 0,1,0 ] ),    // Store it again but with higher y coord as point 2.
-                             Vec.of( 0,0,0 )    ];          // All triangles touch this location -- point 3.
+	constructor( symbol_map, symbols)
+	{ 
+		let transform = Mat4.identity();
+		super( "position", "normal", "texture_coord" );
+		for( let symbol of symbols )
+		{
+			symbol_map[symbol].call(this, transform);
+		}          
+	}
+}
 
-          this.arrays.position.push( ...triangle );
-                        // Rotate our base triangle's normal (0,0,1) to get the new one.  Careful!  Normal vectors are not
-                        // points; their perpendicularity constraint gives them a mathematical quirk that when applying 
-                        // matrices you have to apply the transposed inverse of that matrix instead.  But right now we've
-                        // got a pure rotation matrix, where the inverse and transpose operations cancel out, so it's ok.
-          var newNormal = spin.times( Vec.of( 0,0,1 ).to4(0) ).to3();
-                                                                       // Propagate the same normal to all three vertices:
-          this.arrays.normal.push( newNormal, newNormal, newNormal );
-          this.arrays.texture_coord.push( ...Vec.cast( [ 0,0 ], [ 0,1 ], [ 1,0 ] ) );
-                                                                // Procedurally connect the 3 new vertices into triangles:
-          this.indices.push( 3*i, 3*i + 1, 3*i + 2 );
-        }          
-  }
+//TODO A class that creates a bunch of LSystemPlants given a symbol map, a grammar, a set of heights, maybe perlin noise data for density, etc.
+const ForestPatch = defs.ForestPatch = 
+class ForestPatch extends Shape
+{
+
 }
 
 const Additional_Scenes = [];
