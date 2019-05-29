@@ -45,7 +45,9 @@ class Test_Scene extends Scene
 		"]":(model_transform) => model_transform.times(Mat4.rotation(Math.PI/2, Vec.of(0,1,0))),
 	}
 
-    this.plant = new LSystemPlant(testSymbolMapping, testString);
+    //this.plant = new LSystemPlant(testSymbolMapping, testString);
+
+    this.testGrammar();
   }
 
   display( context, program_state )
@@ -79,8 +81,28 @@ class Test_Scene extends Scene
     this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
 
     // draw a plant
-	this.plant.draw(context, program_state, model_transform, this.materials.plastic);
+	//this.plant.draw(context, program_state, model_transform, this.materials.plastic);
       
+  }
+
+  //TEST STUFF
+  testGrammar()
+  {
+  	//(A → AB), (B → A)
+  	/*
+  	let rules = {
+  		"A" : [ ["AB", 1.] ],
+  		"B" : [ ["A", 1.] ]
+  	}*/
+
+  	let rules = new Map([
+		[ "A", [ ["AB", 1.] ] ],
+		[ "B", [ ["A", 1.] ] ]
+  	]);
+
+  	let testgram = new LSystemGrammar(rules);
+
+  	console.log(testgram.calcString("A", 7));
   }
 }
 
@@ -108,3 +130,58 @@ class ForestPatch extends Shape
 
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
+
+// LSystemGrammar class for calculating strings from grammars
+class LSystemGrammar
+{
+	/*
+		LSystemGrammar constructor
+		
+		inputs:
+			rules- map of alphabet variables to a list of legal substitution tuples (C, P):
+					C- character substitution
+					P- probability of the substitution occurring: [0,1]
+	*/
+	constructor( rules )
+	{
+		this.rules = rules;
+	}
+
+	/*
+		calcString method
+		
+		inputs:
+			init- string of initial alphabet characters
+			depth- maximum number of substitutions
+
+		output: string resulting from substitutions
+	*/
+	calcString( init, depth )
+	{
+		if (depth == 0) return init;
+
+		let output = "";
+
+		for (var i = 0; i < init.length; i++)
+		{
+			let char = init[i], randval = Math.random();
+			let sub = char;
+
+			for( var r of this.rules.get(char) )
+			{
+				if (randval < r[1])
+				{
+					sub = r[0];
+
+					break;
+				}
+
+				randval -= r[1];
+			}
+
+			output += sub;
+		}
+
+		return this.calcString( output, depth - 1 );
+	}
+}
