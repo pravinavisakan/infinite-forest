@@ -9,6 +9,31 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, } = defs
 
 // (Can define Main_Scene's class here)
 
+// helper function that curries the most common plant generation function - returning a shape, and modifying the matrix
+// assumes model_transform is the matrix for the plant, and recipient is the plant shape being made
+// takes in the shape class to be inserted (shape), arguments for that shape (shape_args), the matrix for that shape, and the transformation )
+// returns a 
+const insertShape = (shape, shape_args, transformation) => {
+	return (model_transform, recipient) => {
+		shape.insert_transformed_copy_into(recipient, shape_args, model_transform);
+		return model_transform.times(transformation);
+	}
+}
+
+const insertBranch = (angle, axis) => {
+	return (model_transform, recipient) => {
+		recipient.branchPoints.push(model_transform);
+		return model_transform.times(Mat4.rotation(angle, axis));
+	}
+}
+
+const endBranch = (angle, axis) => {
+	return (model_transform, recipient) => {
+		let transform = recipient.branchPoints.pop();
+		return transform.times(Mat4.rotation(angle, axis));
+	}
+}
+
 const Main_Scene =
 class Test_Scene extends Scene
 {              
@@ -26,23 +51,13 @@ class Test_Scene extends Scene
 	// test string - from "binary tree" grammaar, 3rd recursion
 	const testString = "1111[11[1[0]0]1[0]0]11[1[0]0]1[0]0";
 
-	// helper function that curries the most common plant generation function - returning a shape, and modifying the matrix
-	// assumes Function.call is used, to allow insertion into this shape's object buffer
-	// takes in the shape class to be inserted (shape), arguments for that shape (shape_args), the matrix for that shape, and the transformation )
-	const insertShape = (shape, shape_args, shape_transform, transformation) => {
-		return (model_transform) => {
-			shape.insert_transformed_copy_into(this, shape_args, shape_transform);
-			model_transform.times(transformation);
-		}
-	}
-
 	// maps string symbols to transformations appropriate for that symbol 
 	// Cylinder params [1,10, [[0,10],[0,10]]]
 	const testSymbolMapping = {
-		"1":insertShape(Cube, [], Mat4.translation([0,1,0]), Mat4.translation([0,2,0])),
-		"0":insertShape(Triangle, [], Mat4.identity, Mat4.translation([0,2,0])),
-		"[":(model_transform) => model_transform.times(Mat4.rotation(Math.PI/2, Vec.of(0,1,0))),
-		"]":(model_transform) => model_transform.times(Mat4.rotation(Math.PI/2, Vec.of(0,1,0))),
+		"1":insertShape(Cube, [], Mat4.translation([0,2,0])),
+		"0":insertShape(Triangle, [], Mat4.translation([0,2,0])),
+		"[":insertBranch(Math.PI/4, Vec.of(0,0,1)),
+		"]":endBranch(-Math.PI/4, Vec.of(0,0,1)),
 	}
 
     this.plant = new LSystemPlant(testSymbolMapping, testString);
@@ -76,7 +91,7 @@ class Test_Scene extends Scene
     program_state.lights = [ new Light( Vec.of( 0,0,0,1 ), Color.of( 1,1,1,1 ), 100000 ) ];
 	let model_transform = Mat4.identity();
 
-    this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
+    //this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
 
     // draw a plant
 	this.plant.draw(context, program_state, model_transform, this.materials.plastic);
@@ -90,11 +105,14 @@ class LSystemPlant extends Shape
 {
 	constructor( symbol_map, symbols)
 	{ 
-		let transform = Mat4.identity();
 		super( "position", "normal", "texture_coord" );
+
+		let transform = Mat4.identity();
+		this.branchPoints = [];
+
 		for( let symbol of symbols )
 		{
-			symbol_map[symbol].call(this, transform);
+			transform = symbol_map[symbol](transform, this);
 		}          
 	}
 }
