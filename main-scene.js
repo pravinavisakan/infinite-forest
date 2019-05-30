@@ -9,7 +9,38 @@ import { Noise_Grid, Noise_Generator } from './perlin-noise.js'
     // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
     // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
 
-// (Can define Main_Scene's class here)
+class Colored_Square extends Shape {
+    constructor(color) {
+        super("position", "normal", "texture_coord", "color");
+                                                  // Specify the 4 square corner locations, and match those up with normal vectors:
+        this.arrays.position      = Vec.cast( [-1,-1,0], [1,-1,0], [-1,1,0], [1,1,0] );
+        this.arrays.normal        = Vec.cast( [0,0,1],   [0,0,1],  [0,0,1],  [0,0,1] );
+                                                          // Arrange the vertices into a square shape in texture space too:
+        this.arrays.texture_coord = Vec.cast( [0,0],     [1,0],    [0,1],    [1,1]   );
+                                                     // Use two triangles this time, indexing into four distinct vertices:
+        this.arrays.color = [ color, color, color, color ];
+        this.indices.push( 0, 1, 2,     1, 3, 2 );
+
+    }
+}
+class Noise_Demo extends Shape {
+    constructor(noiseGrid) {
+        super("position", "normal", "texture_coord", "color");
+        this.noiseGrid = noiseGrid;
+        let model_transform = Mat4.identity();
+        for (let i=0; i < noiseGrid.rows; i++) {
+           let prev_row_start = model_transform.copy();
+           for (let j=0; j < noiseGrid.columns; j++) {
+                let noise = (noiseGrid.noise[i][j] + 1)/2;
+                Colored_Square.insert_transformed_copy_into( this, [ Color.of(noise, noise, noise, 1) ], model_transform );
+                model_transform.post_multiply( Mat4.translation([2,0,0]));
+           }
+           model_transform = prev_row_start.copy();
+           model_transform.post_multiply(Mat4.translation([0,-2,0]));
+        }
+    }
+   
+}
 
 const Main_Scene =
 class Test_Scene extends Scene
@@ -20,28 +51,26 @@ class Test_Scene extends Scene
                                                         // At the beginning of our program, load one of each of these shape 
                                                         // definitions onto the GPU.  NOTE:  Only do this ONCE per shape.
                                                         // Don't define blueprints for shapes in display() every frame.
+      this.noiseGen = new Noise_Generator(50);
+      this.grid_variation=2;
+      this.grid_rows=10;
+      this.grid_columns=15;
+      this.noiseGrid = new Noise_Grid(this.grid_rows,this.grid_columns,this.grid_variation,this.noiseGen);
 
-                                                // TODO (#1):  Complete this list with any additional shapes you need.
-      this.shapes = { 'box' : new Square() };
-
-                                                        // TODO (#1d): Modify one sphere shape's existing texture 
-                                                        // coordinates in place.  Multiply them all by 5.
-      // this.shapes.ball_repeat.arrays.texture_coord.forEach( coord => coord
+      this.shapes = { 'box' : new Square(),
+                  'big_box' : new Noise_Demo(this.noiseGrid) };
       
                                                               // *** Shaders ***
 
                                                               // NOTE: The 2 in each shader argument refers to the max
                                                               // number of lights, which must be known at compile time.
                                                               
-                                                              // A simple Phong_Blinn shader without textures:
-      const phong_shader      = new defs.Phong_Shader  (2);
+      const phong_shader = new defs.Phong_Shader  (2);
+      const basic_shader = new defs.Basic_Shader();
       
       this.materials = { plastic: new Material( phong_shader, 
-                                    { ambient: 0.5, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ) };
-      this.noiseGen = new Noise_Generator(50);
-      this.grid_variation=1;
-      this.grid_len=10;
-      this.noiseGrid = new Noise_Grid(this.grid_len,this.grid_variation,this.noiseGen);
+                         { ambient: 0.5, diffusivity: 1, specularity: 0, color: Color.of(1,1,1,1) } ),
+                         basic_material: new Material( basic_shader ) };
     }
 
   display( context, program_state )
@@ -103,23 +132,25 @@ class Test_Scene extends Scene
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
 
       model_transform = Mat4.identity();
-      for (let i=0; i < this.grid_len; i++) {
-        let prev_row_start = model_transform.copy();
-        for (let j=0; j < this.grid_len; j++) {
-        let noise = this.noiseGrid.noise[i][j];
-        this.shapes.box.draw( context, program_state, model_transform, this.materials.plastic.override( Color.of(noise,noise,noise,1) ) );
-        model_transform.post_multiply( Mat4.translation([ 2, 0, 0 ]) );
-        }
-        model_transform = prev_row_start.copy();
-        model_transform.post_multiply( Mat4.translation([ 0, -2, 0 ]) );
 
-      }
+      this.shapes.big_box.draw( context, program_state, model_transform, this.materials.basic_material );
+//       for (let i=0; i < this.grid_rows; i++) {
+//         let prev_row_start = model_transform.copy();
+//         for (let j=0; j < this.grid_columns; j++) {
+
+//         let noise = (this.noiseGrid.noise[i][j] + 1)/2; // convert to a value in [0,1]
+//         this.shapes.box.draw( context, program_state, model_transform, this.materials.plastic.override( Color.of(noise,noise,noise,1) ) );
+//         model_transform.post_multiply( Mat4.translation([ 2, 0, 0 ]) );
+//         }
+//         model_transform = prev_row_start.copy();
+//         model_transform.post_multiply( Mat4.translation([ 0, -2, 0 ]) );
+
+//       }
 
       // draw background for contrast
       model_transform = Mat4.identity();
-      let scale = 0.2;
-      model_transform.post_multiply( Mat4.translation([this.grid_len-1,-this.grid_len,-1]));
-      model_transform.post_multiply( Mat4.scale([this.grid_len+1, this.grid_len+1, 1]));
+      model_transform.post_multiply( Mat4.translation([this.grid_columns-1,-this.grid_rows,-1]));
+      model_transform.post_multiply( Mat4.scale([this.grid_columns+1, this.grid_rows+1, 1]));
       this.shapes.box.draw( context, program_state, model_transform, this.materials.plastic.override(blue));
 
       // ***** END TEST SCENE *****

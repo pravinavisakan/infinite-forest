@@ -5,38 +5,29 @@ const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
 const { Cube, Subdivision_Sphere, Transforms_Sandbox_Base } = defs;
 
 const Noise_Grid = class Noise_Grid {
-  constructor(length, variation, generator) { // variation = 1,2, or 3, length >= 2 and > variation
-        
-    variation = Math.round(variation);
+  constructor(rows, columns, variation, generator) { // variation = 1,2, or 3, length >= 2 and > variation
+    this.rows = Math.round(rows);
+    this.columns = Math.round(columns);
+    
     if (variation < 1) {
         variation = 1;
-    } else if (variation > 3) {
-        variation = 3;
-    } 
+    }  
         
-    length = Math.round(length);
+    length = Math.min(this.rows, this.columns);
     if (length < 2) {
         length = 2;
     } 
-    if (variation > length) { // if variation > length, truncate some gradient vectors
-        variation = length;
+    if (variation >= length) { // if variation > length, truncate some gradient vectors
+        variation = length-1;
     }
 
-    if (variation == 1) {
-        this.increment = 1.0 / length;
-    } 
-    if (variation == 2) { // debug these later
-        this.increment = 1.0 / 2*length;
-    }
-    if (variation == 3) { // debug these later
-        this.increment = 1.0 / 3*length;
-    }
+    this.increment = variation*1.0 / length;
  
     this.generator = generator;
 
-    this.noise = [...Array(length)].map(a => Array(length));
-    for (let i=0; i < length; i++) {
-        for (let j=0; j < length; j++) {
+    this.noise = [...Array(this.rows)].map(a => Array(this.columns));
+    for (let i=0; i < this.rows; i++) {
+        for (let j=0; j < this.columns; j++) {
             this.noise[i][j] = generator.calculateNoise(this.increment*(i+1), this.increment*(j+1));
         }
     } 
