@@ -2,13 +2,16 @@ import {tiny, defs} from './common.js';
                                                                 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Square, Cube, Subdivision_Sphere, Transforms_Sandbox_Base } = defs;
+const { Square, Grid_Patch } = defs;
 
 import { Noise_Grid, Noise_Generator } from './perlin-noise.js'
 
     // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
     // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
 
+///////////////////
+// custom shapes //
+///////////////////
 class Colored_Square extends Shape {
     constructor(color) {
         super("position", "normal", "texture_coord", "color");
@@ -23,6 +26,7 @@ class Colored_Square extends Shape {
 
     }
 }
+
 class Noise_Demo extends Shape {
     constructor(noiseGrid) {
         super("position", "normal", "texture_coord", "color");
@@ -39,31 +43,129 @@ class Noise_Demo extends Shape {
            model_transform.post_multiply(Mat4.translation([0,-2,0]));
         }
     }
-   
 }
 
-const Main_Scene =
-class Test_Scene extends Scene
-{                                             // **Solar_System**:  Your Assingment's Scene.
-  constructor()
-    {                  // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
+class Height_Map extends Shape {
+    constructor(rows, columns, heights, texture_coord_range = [ [ 0, (rows-1) ], [ 0, (columns-1) ] ]) {
+        super("position", "normal", "texture_coord")
+
+        // position and texture coordinates
+        let points = [...Array(rows)].map(a => Array(columns));
+        for (let i=0; i < rows; i++) {
+            for (let j=0; j < columns; j++) {
+                points[i][j] = Vec.of(i,j,heights[i][j]);
+                this.arrays.position.push(points[i][j]);
+
+                // Interpolate texture coords from a provided range.
+                const a1 = j/(columns-1), a2 = i/(rows-1), x_range = texture_coord_range[0], y_range = texture_coord_range[1];
+                this.arrays.texture_coord.push( Vec.of( ( a1 )*x_range[1] + ( 1-a1 )*x_range[0], ( a2 )*y_range[1] + ( 1-a2 )*y_range[0] ) );
+            }
+        }
+        
+        // normal
+        for(   let r = 0; r < rows;    r++ ) {           // Generate normals by averaging the cross products of all defined neighbor pairs.
+            for( let c = 0; c < columns; c++ )
+            { let curr = points[r][c], neighbors = new Array(4), normal = Vec.of( 0,0,0 );          
+              for( let [ i, dir ] of [ [ -1,0 ], [ 0,1 ], [ 1,0 ], [ 0,-1 ] ].entries() )         // Store each neighbor by rotational order.
+                neighbors[i] = points[ r + dir[1] ] && points[ r + dir[1] ][ c + dir[0] ];        // Leave "undefined" in the array wherever
+                                                                                                  // we hit a boundary.
+              for( let i = 0; i < 4; i++ )                                          // Take cross-products of pairs of neighbors, proceeding
+                if( neighbors[i] && neighbors[ (i+1)%4 ] )                          // a consistent rotational direction through the pairs:
+                  normal = normal.plus( neighbors[i].minus( curr ).cross( neighbors[ (i+1)%4 ].minus( curr ) ) );          
+              normal.normalize();                                                              // Normalize the sum to get the average vector.
+                                                         // Store the normal if it's valid (not NaN or zero length), otherwise use a default:
+              if( normal.every( x => x == x ) && normal.norm() > .01 )  this.arrays.normal.push( Vec.from( normal ) );    
+              else                                                      this.arrays.normal.push( Vec.of( 0,0,1 )    );
+            }
+        }   
+
+        // indices
+        for( var h = 0; h < rows-1; h++ )             // Generate a sequence like this (if #columns is 10):  
+            for( var i = 0; i < 2 * (columns-1); i++ )    // "1 11 0  11 1 12  2 12 1  12 2 13  3 13 2  13 3 14  4 14 3..." 
+                for( var j = 0; j < 3; j++ )
+                    this.indices.push( h * columns + (columns-1) * ( ( i + ( j % 2 ) ) % 2 ) + ( ~~( ( j % 3 ) / 2 ) ? 
+                                     ( ~~( i / 2 ) + 2 * ( i % 2 ) )  :  ( ~~( i / 2 ) + 1 ) ) );   
+    }
+}
+
+/////////////////
+// test scenes //
+/////////////////
+class Height_Map_Test extends Scene {
+    constructor() {
       super();
-                                                        // At the beginning of our program, load one of each of these shape 
-                                                        // definitions onto the GPU.  NOTE:  Only do this ONCE per shape.
-                                                        // Don't define blueprints for shapes in display() every frame.
       this.noiseGen = new Noise_Generator(50);
-      this.grid_variation=2;
+      this.grid_rows=30;
+      this.grid_columns=30;
+
+      // level 1
+      let scale1 = 10;
+      let var1 = 2;
+      let grid1 = new Noise_Grid(this.grid_rows,this.grid_columns,var1,this.noiseGen);
+      let heights1 = grid1.noise.map(a => a.map(b => (b+1)*scale1));
+
+      // level 2
+      let scale2 = 1;
+      let var2 = 5;
+      let grid2 = new Noise_Grid(this.grid_rows,this.grid_columns,var2,this.noiseGen);
+      let heights2 = grid2.noise.map(a => a.map(b => (b+1)*scale2));
+
+      // level 3
+      let scale3 = 0.2;
+      let var3 = 25;
+      let grid3 = new Noise_Grid(this.grid_rows,this.grid_columns,var3,this.noiseGen);
+      let heights3 = grid3.noise.map(a => a.map(b => (b+1)*scale3));
+
+      // combined height
+      let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]+heights3[i][j]));
+      this.shapes = { 'height_map' : new Height_Map(this.grid_rows, this.grid_columns, final_heights) }; 
+
+      const phong_shader = new defs.Phong_Shader  (2);     
+      this.materials = { plastic: new Material( phong_shader, 
+                         { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ) };        
+    }
+    display(context, program_state) {
+                           // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+      if( !context.scratchpad.controls ) 
+        {                       // Add a movement controls panel to the page:
+          this.children.push( context.scratchpad.controls = new defs.Movement_Controls() ); 
+
+                    // Define the global camera and projection matrices, which are stored in program_state.  The camera
+                    // matrix follows the usual format for transforms, but with opposite values (cameras exist as 
+                    // inverted matrices).  The projection matrix follows an unusual format and determines how depth is 
+                    // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
+                    // orthographic() automatically generate valid matrices for one.  The input arguments of
+                    // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
+          program_state.set_camera( Mat4.look_at( Vec.of( 0,10,20 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+          this.initial_camera_location = program_state.camera_inverse;
+          program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
+        }
+      const t = this.t = program_state.animation_time/1000;
+      const angle = Math.sin( t );
+      const light_position = Mat4.rotation( angle, [ 1,0,0 ] ).times( Vec.of( 0,-1,1,0 ) );
+      program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
+
+      let model_transform = Mat4.identity();
+      model_transform.post_multiply( Mat4.scale([2,2,2]) );
+      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
+      this.shapes.height_map.draw( context, program_state, model_transform, this.materials.plastic );    
+    }
+}
+
+class Grayscale_Grid extends Scene
+{                                            
+  constructor()
+    {                  
+      super();
+
+      this.noiseGen = new Noise_Generator(50);
+      this.grid_variation=4;
       this.grid_rows=10;
       this.grid_columns=15;
       this.noiseGrid = new Noise_Grid(this.grid_rows,this.grid_columns,this.grid_variation,this.noiseGen);
 
       this.shapes = { 'box' : new Square(),
                   'big_box' : new Noise_Demo(this.noiseGrid) };
-      
-                                                              // *** Shaders ***
-
-                                                              // NOTE: The 2 in each shader argument refers to the max
-                                                              // number of lights, which must be known at compile time.
                                                               
       const phong_shader = new defs.Phong_Shader  (2);
       const basic_shader = new defs.Basic_Shader();
@@ -74,9 +176,7 @@ class Test_Scene extends Scene
     }
 
   display( context, program_state )
-    {                                                // display():  Called once per frame of animation.  For each shape that you want to
-                                                     // appear onscreen, place a .draw() call for it inside.  Each time, pass in a
-                                                     // different matrix value to control where the shape appears.
+    {                                                
      
                            // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
       if( !context.scratchpad.controls ) 
@@ -94,39 +194,7 @@ class Test_Scene extends Scene
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
 
-                                                                      // Find how much time has passed in seconds; we can use
-                                                                      // time as an input when calculating new transforms:
-      const t = program_state.animation_time / 1000;
-
-                                             // Variables that are in scope for you to use:
-                                             // this.shapes: Your shapes, defined above.
-                                             // this.materials: Your materials, defined above.
-                                             // this.lights:  Assign an array of Light objects to this to light up your scene.
-                                             // this.lights_on:  A boolean variable that changes when the user presses a button.
-                                             // this.camera_teleporter: A child scene that helps you see your planets up close.
-                                             //                         For this to work, you must push their inverted matrices
-                                             //                         into the "this.camera_teleporter.cameras" array.
-                                             // t:  Your program's time in seconds.
-                                             // program_state:  Information the shader needs for drawing.  Pass to draw().
-                                             // context:  Wraps the WebGL rendering context shown onscreen.  Pass to draw().                                                       
-
-
-      /**********************************
-      Start coding down here!!!!
-      **********************************/         
-
-      const blue = Color.of( 0,0,.5,1 ), yellow = Color.of( .5,.5,0,1 );
-
-                                    // Variable model_transform will be a local matrix value that helps us position shapes.
-                                    // It starts over as the identity every single frame - coordinate axes at the origin.
       let model_transform = Mat4.identity();
-
-
-                                                // *** Lights: *** Values of vector or point lights.  They'll be consulted by 
-                                                // the shader when coloring shapes.  See Light's class definition for inputs.
-
-
-      // ***** BEGIN TEST SCENE *****               
 
       const light_position = Vec.of(0,-1,1,0); 
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
@@ -134,18 +202,6 @@ class Test_Scene extends Scene
       model_transform = Mat4.identity();
 
       this.shapes.big_box.draw( context, program_state, model_transform, this.materials.basic_material );
-//       for (let i=0; i < this.grid_rows; i++) {
-//         let prev_row_start = model_transform.copy();
-//         for (let j=0; j < this.grid_columns; j++) {
-
-//         let noise = (this.noiseGrid.noise[i][j] + 1)/2; // convert to a value in [0,1]
-//         this.shapes.box.draw( context, program_state, model_transform, this.materials.plastic.override( Color.of(noise,noise,noise,1) ) );
-//         model_transform.post_multiply( Mat4.translation([ 2, 0, 0 ]) );
-//         }
-//         model_transform = prev_row_start.copy();
-//         model_transform.post_multiply( Mat4.translation([ 0, -2, 0 ]) );
-
-//       }
 
       // draw background for contrast
       model_transform = Mat4.identity();
@@ -153,12 +209,10 @@ class Test_Scene extends Scene
       model_transform.post_multiply( Mat4.scale([this.grid_columns+1, this.grid_rows+1, 1]));
       this.shapes.box.draw( context, program_state, model_transform, this.materials.plastic.override(blue));
 
-      // ***** END TEST SCENE *****
-
-
-
     }
 }
+
+const Main_Scene = Height_Map_Test;
 
 const Additional_Scenes = [];
 

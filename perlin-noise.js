@@ -17,7 +17,7 @@ const Noise_Grid = class Noise_Grid {
     if (length < 2) {
         length = 2;
     } 
-    if (variation >= length) { // if variation > length, truncate some gradient vectors
+    if (variation >= length) { // if variation > length, decrease it to keep transitions smooth
         variation = length-1;
     }
 
