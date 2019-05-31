@@ -15,6 +15,7 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 // returns a new model transform for storage
 
 //to be exported, and possibly used for symbol map auto-generation
+// TODO ad flowers, fruits, something else?
 const insertBranchFunctions = [];
 const insertLeafFunctions= [];
 const branchOutFunctions = [];

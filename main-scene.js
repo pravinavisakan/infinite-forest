@@ -14,7 +14,7 @@ import {rules, symbolMaps} from './grammars_and_maps.js';
 
 // pull rules and maps into this namespace
 const { Algae, Binary } = rules;
-const { AlgaeTestMap, BinaryTestMap } = symbolMaps;
+const { AlgaeMap, BinaryMap } = symbolMaps;
 
 
 // useful variables
@@ -34,9 +34,15 @@ class Test_Scene extends Scene
 	// Plant generation testing
 
 	// test string - from "binary tree" grammar, 3rd recursion
-	const testString = "1111[11[1[0]0]1[0]0]11[1[0]0]1[0]0";
+	//const testString = "1111[11[1[0]0]1[0]0]11[1[0]0]1[0]0";
 
-    this.plant = new LSystemPlant(testSymbolMapping, testString);
+	// An example rendering of a single plant, using a test mapping and binary tree rules
+
+	const binaryGrammar = new LSystemGrammar(Binary);
+
+	const testString = binaryGrammar.calcString("0",3);
+
+    this.plant = new LSystemPlant(BinaryMap, testString);
 
   }
 

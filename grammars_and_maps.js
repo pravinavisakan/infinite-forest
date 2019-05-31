@@ -3,6 +3,8 @@ import {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranc
 //INFO
 // File for the rules of grammars and symbol maps for use with L System Plant Rendering
 
+// TODO current maps are for testing - auto generate using random/perlin noise shape insertions
+
 //exports
 const rules = {};
 const symbolMaps = {};
@@ -23,7 +25,9 @@ symbolMaps.AlgaeMap = testAlgaeSymbolMapping;
 // BINARY TREES - rules, and a test symbol map
 const binaryRules = new Map([
     [ "1", [ ["11", 1.] ] ],
-    [ "0", [ ["1[0]0", 1.] ] ]
+    [ "0", [ ["1[0]0", 1.] ] ],
+    [ "[", [ ["[", 1.] ] ], // aka a constant
+    [ "]", [ ["]", 1.] ] ]
 ]);
 rules.Binary = binaryRules;
 
