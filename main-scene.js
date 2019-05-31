@@ -2,21 +2,23 @@ import {tiny, defs} from './common.js';
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, } = defs;
+const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron} = defs;
 
 // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
 // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
 
 // (Can define Main_Scene's class here)
 
-// helper function that curries the most common plant generation function - returning a shape, and modifying the matrix
-// assumes model_transform is the matrix for the plant, and recipient is the plant shape being made
+// helper function that curries the most common plant generation function - applying a transform, inserting a shape, 
+// and applying another transform
+// assumes model_transform is the matrix for the plant, and recipient is the plant shape object being constructed
 // takes in the shape class to be inserted (shape), arguments for that shape (shape_args), the matrix for that shape, and the transformation )
-// returns a 
-const insertShape = (shape, shape_args, transformation) => {
+// returns a new model transform for storage
+const insertShape = (shape, shape_args, shape_transformation = Mat4.identity(), pre_transformation = Mat4.identity(), post_transformation = Mat4.identity()) => {
 	return (model_transform, recipient) => {
-		shape.insert_transformed_copy_into(recipient, shape_args, model_transform);
-		return model_transform.times(transformation);
+		let transform = model_transform.times(pre_transformation)
+		shape.insert_transformed_copy_into(recipient, shape_args, transform.times(shape_transformation));
+		return transform.times(post_transformation);
 	}
 }
 
@@ -33,6 +35,9 @@ const endBranch = (angle, axis) => {
 		return transform.times(Mat4.rotation(angle, axis));
 	}
 }
+
+// useful variables
+//const leaf_pre_transform = Mat4.rotation(Math.PI/2, );
 
 const Main_Scene =
 class Test_Scene extends Scene
@@ -54,8 +59,8 @@ class Test_Scene extends Scene
 	// maps string symbols to transformations appropriate for that symbol 
 	// Cylinder params [1,10, [[0,10],[0,10]]]
 	const testSymbolMapping = {
-		"1":insertShape(Cube, [], Mat4.translation([0,2,0])),
-		"0":insertShape(Triangle, [], Mat4.translation([0,2,0])),
+		"1":insertShape(Cube, [],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])),
+		"0":insertShape(Tetrahedron, [],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])),
 		"[":insertBranch(Math.PI/4, Vec.of(0,0,1)),
 		"]":endBranch(-Math.PI/4, Vec.of(0,0,1)),
 	}
@@ -88,7 +93,7 @@ class Test_Scene extends Scene
       const t = program_state.animation_time / 1000;
 
 
-    program_state.lights = [ new Light( Vec.of( 0,0,0,1 ), Color.of( 1,1,1,1 ), 100000 ) ];
+    program_state.lights = [ new Light( Vec.of( 0,1,0,1 ), Color.of( 1,1,1,1 ), 100000 ) ];
 	let model_transform = Mat4.identity();
 
     //this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
