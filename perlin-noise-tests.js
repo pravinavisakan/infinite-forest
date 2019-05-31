@@ -12,6 +12,7 @@ import { Noise_Grid, Noise_Generator } from './perlin-noise.js'
 ///////////////////
 // custom shapes //
 ///////////////////
+const Colored_Square = defs.Colored_Square = 
 class Colored_Square extends Shape {
     constructor(color) {
         super("position", "normal", "texture_coord", "color");
@@ -27,6 +28,7 @@ class Colored_Square extends Shape {
     }
 }
 
+const Noise_Demo = defs.Noise_Demo = 
 class Noise_Demo extends Shape {
     constructor(noiseGrid) {
         super("position", "normal", "texture_coord", "color");
@@ -136,7 +138,7 @@ class Height_Map_Test extends Scene {
                     // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
                     // orthographic() automatically generate valid matrices for one.  The input arguments of
                     // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
-          program_state.set_camera( Mat4.look_at( Vec.of( 0,10,20 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+          program_state.set_camera( Mat4.look_at( Vec.of( 80,50,70 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
@@ -212,11 +214,12 @@ class Grayscale_Grid extends Scene
     }
 }
 
-const Main_Scene = Height_Map_Test;
+//const Main_Scene = Height_Map_Test;
 
-const Additional_Scenes = [];
+//const Additional_Scenes = [];
+const Noise_Test_Scenes = { Grayscale_Grid, Height_Map_Test };
 
-export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
+export { Noise_Test_Scenes, defs }
 
 
 

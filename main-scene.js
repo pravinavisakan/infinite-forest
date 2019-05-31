@@ -3,7 +3,7 @@ import {tiny, defs} from './common.js';
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron} = defs;
+const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron } = defs;
 
 // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
 // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
@@ -11,16 +11,18 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 // Imports for our term projects
 import {LSystemPlant, LSystemGrammar, ForestPatch} from './l_system.js';
 import {rules, symbolMaps} from './grammars_and_maps.js';
+import {Noise_Test_Scenes} from './perlin-noise-tests.js'
 
 // pull rules and maps into this namespace
 const { Algae, Binary } = rules;
 const { AlgaeMap, BinaryMap } = symbolMaps;
-
+const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
 
 // useful variables
 //const leaf_pre_transform = Mat4.rotation(Math.PI/2, );
 
-const Main_Scene =
+
+
 class Test_Scene extends Scene
 {              
   constructor()
@@ -83,5 +85,6 @@ class Test_Scene extends Scene
 
 }
 
+const Main_Scene = Height_Map_Test;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
