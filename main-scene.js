@@ -1,4 +1,5 @@
 import {tiny, defs} from './common.js';
+
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
@@ -7,34 +8,14 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
 // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
 
-// (Can define Main_Scene's class here)
+// Imports for our term projects
+import {LSystemPlant, LSystemGrammar, ForestPatch} from './l_system.js';
+import {rules, symbolMaps} from './grammars_and_maps.js';
 
-// helper function that curries the most common plant generation function - applying a transform, inserting a shape, 
-// and applying another transform
-// assumes model_transform is the matrix for the plant, and recipient is the plant shape object being constructed
-// takes in the shape class to be inserted (shape), arguments for that shape (shape_args), the matrix for that shape, and the transformation )
-// returns a new model transform for storage
-const insertShape = (shape, shape_args, shape_transformation = Mat4.identity(), pre_transformation = Mat4.identity(), post_transformation = Mat4.identity()) => {
-	return (model_transform, recipient) => {
-		let transform = model_transform.times(pre_transformation)
-		shape.insert_transformed_copy_into(recipient, shape_args, transform.times(shape_transformation));
-		return transform.times(post_transformation);
-	}
-}
+// pull rules and maps into this namespace
+const { Algae, Binary } = rules;
+const { AlgaeTestMap, BinaryTestMap } = symbolMaps;
 
-const insertBranch = (angle, axis) => {
-	return (model_transform, recipient) => {
-		recipient.branchPoints.push(model_transform);
-		return model_transform.times(Mat4.rotation(angle, axis));
-	}
-}
-
-const endBranch = (angle, axis) => {
-	return (model_transform, recipient) => {
-		let transform = recipient.branchPoints.pop();
-		return transform.times(Mat4.rotation(angle, axis));
-	}
-}
 
 // useful variables
 //const leaf_pre_transform = Mat4.rotation(Math.PI/2, );
@@ -50,24 +31,13 @@ class Test_Scene extends Scene
 	const phong_shader = new defs.Phong_Shader  (2);
     this.materials = { plastic: new Material( phong_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),};
 
-
 	// Plant generation testing
 
-	// test string - from "binary tree" grammaar, 3rd recursion
+	// test string - from "binary tree" grammar, 3rd recursion
 	const testString = "1111[11[1[0]0]1[0]0]11[1[0]0]1[0]0";
 
-	// maps string symbols to transformations appropriate for that symbol 
-	// Cylinder params [1,10, [[0,10],[0,10]]]
-	const testSymbolMapping = {
-		"1":insertShape(Cube, [],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])),
-		"0":insertShape(Tetrahedron, [],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])),
-		"[":insertBranch(Math.PI/4, Vec.of(0,0,1)),
-		"]":endBranch(-Math.PI/4, Vec.of(0,0,1)),
-	}
+    this.plant = new LSystemPlant(testSymbolMapping, testString);
 
-    //this.plant = new LSystemPlant(testSymbolMapping, testString);
-
-    this.testGrammar();
   }
 
   display( context, program_state )
@@ -101,110 +71,11 @@ class Test_Scene extends Scene
     //this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
 
     // draw a plant
-	//this.plant.draw(context, program_state, model_transform, this.materials.plastic);
+	this.plant.draw(context, program_state, model_transform, this.materials.plastic);
       
   }
-
-  //TEST STUFF
-  testGrammar()
-  {
-  	//(A → AB), (B → A)
-  	/*
-  	let rules = {
-  		"A" : [ ["AB", 1.] ],
-  		"B" : [ ["A", 1.] ]
-  	}*/
-
-  	let rules = new Map([
-		[ "A", [ ["AB", 1.] ] ],
-		[ "B", [ ["A", 1.] ] ]
-  	]);
-
-  	let testgram = new LSystemGrammar(rules);
-
-  	console.log(testgram.calcString("A", 7));
-  }
-}
-
-// Creates a single plant shape, given a string of symbols and a mapping of symbols to basic shapes
-const LSystemPlant = defs.LSystemPlant =
-class LSystemPlant extends Shape
-{
-	constructor( symbol_map, symbols)
-	{ 
-		super( "position", "normal", "texture_coord" );
-
-		let transform = Mat4.identity();
-		this.branchPoints = [];
-
-		for( let symbol of symbols )
-		{
-			transform = symbol_map[symbol](transform, this);
-		}          
-	}
-}
-
-//TODO A class that creates a bunch of LSystemPlants given a symbol map, a grammar, a set of heights, maybe perlin noise data for density, etc.
-const ForestPatch = defs.ForestPatch = 
-class ForestPatch extends Shape
-{
 
 }
 
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
-
-// LSystemGrammar class for calculating strings from grammars
-class LSystemGrammar
-{
-	/*
-		LSystemGrammar constructor
-		
-		inputs:
-			rules- map of alphabet variables to a list of legal substitution tuples (C, P):
-					C- character substitution
-					P- probability of the substitution occurring: [0,1]
-	*/
-	constructor( rules )
-	{
-		this.rules = rules;
-	}
-
-	/*
-		calcString method
-		
-		inputs:
-			init- string of initial alphabet characters
-			depth- maximum number of substitutions
-
-		output: string resulting from substitutions
-	*/
-	calcString( init, depth )
-	{
-		if (depth == 0) return init;
-
-		let output = "";
-
-		for (var i = 0; i < init.length; i++)
-		{
-			let char = init[i], randval = Math.random();
-			let sub = char;
-
-			for( var r of this.rules.get(char) )
-			{
-				if (randval < r[1])
-				{
-					sub = r[0];
-
-					break;
-				}
-
-				randval -= r[1];
-			}
-
-			output += sub;
-		}
-
-		return this.calcString( output, depth - 1 );
-	}
-}
