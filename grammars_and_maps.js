@@ -3,11 +3,12 @@ import {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranc
 //INFO
 // File for the rules of grammars and symbol maps for use with L System Plant Rendering
 
-// TODO current maps are for testing - auto generate using random/perlin noise shape insertions
+// a "generic" symbol map contains refernces to arrays of insertion function for the appropriate "type" of shape 
+// to be inserted, instead of a given shape insertion function. This will allow easier auto-generation in ForestPatch
 
 //exports
 const rules = {};
-const symbolMaps = {};
+const genericSymbolMaps = {};
 
 // ALGAE - rules, and a test symbol map 
 const algaeRules = new Map([
@@ -17,10 +18,10 @@ const algaeRules = new Map([
 rules.Algae = algaeRules;
 
 const testAlgaeSymbolMapping = {
-    "A":insertLeafFunctions[0],
-    "B":insertBranchFunctions[0],
+    "A":insertLeafFunctions,
+    "B":insertBranchFunctions,
 }
-symbolMaps.AlgaeMap = testAlgaeSymbolMapping;
+genericSymbolMaps.AlgaeMap = testAlgaeSymbolMapping;
 
 // BINARY TREES - rules, and a test symbol map
 const binaryRules = new Map([
@@ -32,11 +33,11 @@ const binaryRules = new Map([
 rules.Binary = binaryRules;
 
 const testBinarySymbolMapping = {
-    "1":insertBranchFunctions[0],
-    "0":insertLeafFunctions[0],
-    "[":branchOutFunctions[0],
-    "]":endBranchFunctions[0],
+    "1":insertBranchFunctions,
+    "0":insertLeafFunctions,
+    "[":branchOutFunctions,
+    "]":endBranchFunctions,
 }
-symbolMaps.BinaryMap = testBinarySymbolMapping;
+genericSymbolMaps.BinaryMap = testBinarySymbolMapping;
 
-export {rules, symbolMaps}
+export {rules, genericSymbolMaps}

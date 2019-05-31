@@ -10,11 +10,11 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 
 // Imports for our term projects
 import {LSystemPlant, LSystemGrammar, ForestPatch} from './l_system.js';
-import {rules, symbolMaps} from './grammars_and_maps.js';
+import {rules, genericSymbolMaps} from './grammars_and_maps.js';
 
 // pull rules and maps into this namespace
 const { Algae, Binary } = rules;
-const { AlgaeMap, BinaryMap } = symbolMaps;
+const { AlgaeMap, BinaryMap } = genericSymbolMaps;
 
 
 // useful variables
@@ -42,7 +42,16 @@ class Test_Scene extends Scene
 
 	const testString = binaryGrammar.calcString("0",3);
 
-    this.plant = new LSystemPlant(BinaryMap, testString);
+	// crude generation of a mapping from symbols to shape insertion functions
+
+	const generatedBinaryMap = {};
+
+	for( let symbol in BinaryMap )
+	{
+		generatedBinaryMap[symbol] = BinaryMap[symbol][0];
+	}   
+
+    this.plant = new LSystemPlant(generatedBinaryMap, testString);
 
   }
 
