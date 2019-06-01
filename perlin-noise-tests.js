@@ -56,7 +56,7 @@ class Height_Map extends Shape {
         for (let i=0; i < rows; i++) {
             for (let j=0; j < columns; j++) {
                 points[i][j] = Vec.of(i,j,heights[i][j]);
-                this.arrays.position.push(points[i][j]);
+                this.arrays.position.push(Vec.of(i/(rows-1), j/(columns-1), heights[i][j]));
 
                 // Interpolate texture coords from a provided range.
                 const a1 = j/(columns-1), a2 = i/(rows-1), x_range = texture_coord_range[0], y_range = texture_coord_range[1];
@@ -97,34 +97,39 @@ class Height_Map_Test extends Scene {
     constructor() {
       super();
       this.noiseGen = new Noise_Generator(50);
-      this.grid_rows=30;
+      this.grid_rows=60;
       this.grid_columns=30;
 
       // level 1
-      let scale1 = 10;
+      let scale1 = 0.5;
       let var1 = 2;
       let grid1 = new Noise_Grid(this.grid_rows,this.grid_columns,var1,this.noiseGen);
       let heights1 = grid1.noise.map(a => a.map(b => (b+1)*scale1));
 
       // level 2
-      let scale2 = 1;
+      let scale2 = 0.05;
       let var2 = 5;
       let grid2 = new Noise_Grid(this.grid_rows,this.grid_columns,var2,this.noiseGen);
       let heights2 = grid2.noise.map(a => a.map(b => (b+1)*scale2));
 
       // level 3
-      let scale3 = 0.2;
+      let scale3 = 0.01;
       let var3 = 25;
       let grid3 = new Noise_Grid(this.grid_rows,this.grid_columns,var3,this.noiseGen);
       let heights3 = grid3.noise.map(a => a.map(b => (b+1)*scale3));
 
       // combined height
       let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]+heights3[i][j]));
-      this.shapes = { 'height_map' : new Height_Map(this.grid_rows, this.grid_columns, final_heights) }; 
+      // split into sub arrays
+      let final_heightsA = final_heights.slice(0,this.grid_rows/2+1);
+      let final_heightsB = final_heights.slice(this.grid_rows/2,this.grid_rows);
+
+      this.shapes = { 'height_mapA' : new Height_Map(this.grid_rows/2+1, this.grid_columns, final_heightsA),
+                      'height_mapB' : new Height_Map(this.grid_rows/2, this.grid_columns, final_heightsB)}; 
 
       const phong_shader = new defs.Phong_Shader  (2);     
       this.materials = { plastic: new Material( phong_shader, 
-                         { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ) };        
+                         { ambient: 0.5, diffusivity: 0.7, specularity: 1, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ) };        
     }
     display(context, program_state) {
                            // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
@@ -148,9 +153,11 @@ class Height_Map_Test extends Scene {
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
 
       let model_transform = Mat4.identity();
-      model_transform.post_multiply( Mat4.scale([2,2,2]) );
       model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
-      this.shapes.height_map.draw( context, program_state, model_transform, this.materials.plastic );    
+      model_transform.post_multiply( Mat4.scale([20,20,20]));
+      this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
+      model_transform.post_multiply( Mat4.translation([1,0,0]));
+      this.shapes.height_mapB.draw( context, program_state, model_transform, this.materials.plastic ); 
     }
 }
 
