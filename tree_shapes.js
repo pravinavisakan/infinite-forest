@@ -1,10 +1,11 @@
 import {tiny, defs} from './common.js';
-import {Colored_Cube, Colored_Tetrahedron} from './colored-shapes.js';
+import {colored_shapes_defs} from './colored-shapes.js';
 
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
 const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron} = defs;
+const { cCube, cTetrahedron } = colored_shapes_defs;
 
 // INFO
 // A file for shapes and helper functions with which to build symbol maps, 
@@ -59,10 +60,10 @@ const brown = Color.of(0.545098, 0.270588, 0.0745098, 1);
 const green = Color.of(0.180392, 0.545098, 0.341176, 1);
 
 // a simple box branch
-insertBranchFunctions.push(insertShape(Colored_Cube, [brown],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])));
+insertBranchFunctions.push(insertShape(cCube, [brown],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])));
 
 // a simple tetrahedron leaf
-insertLeafFunctions.push(insertShape(Colored_Tetrahedron, [green],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])));
+insertLeafFunctions.push(insertShape(cTetrahedron, [green],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])));
 
 // a simple branch out that rotates 45 degrees to the left, along z
 branchOutFunctions.push(branchOut(Math.PI/4, Vec.of(0,0,1)));
