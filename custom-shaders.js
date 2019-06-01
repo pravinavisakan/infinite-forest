@@ -1,39 +1,34 @@
 import {tiny, defs} from './common.js';
 
-// Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron } = defs;
+const { Cube, Subdivision_Sphere } = defs;
 
+// EXAMPLE SUB-SHAPE
 const Colored_Sphere = 
 class Colored_Sphere extends Shape {
-  constructor(color) {
+  constructor(color) { // pass color as an argument to the sub-shape constructor
+    // add "color" as a parameter to the super constructor
     super("position", "normal", "texture_coord", "color");
+
+      // this stuff is specific to subdivision spheres. (ignore this section)
       const max_subdivisions = 4;
-                                                                        // Start from the following equilateral tetrahedron:
       const tetrahedron = [ [ 0, 0, -1 ], [ 0, .9428, .3333 ], [ -.8165, -.4714, .3333 ], [ .8165, -.4714, .3333 ] ];
       this.arrays.position = Vec.cast( ...tetrahedron );
-                                                                        // Begin recursion:
       this.subdivide_triangle( 0, 1, 2, max_subdivisions);
       this.subdivide_triangle( 3, 2, 1, max_subdivisions);
       this.subdivide_triangle( 1, 0, 3, max_subdivisions);
       this.subdivide_triangle( 0, 2, 3, max_subdivisions);
       
-                                     // With positions calculated, fill in normals and texture_coords of the finished Sphere:
       for( let p of this.arrays.position )
-        {                                    // Each point has a normal vector that simply goes to the point from the origin:
+        {                                    
           this.arrays.normal.push( p.copy() );
-
-                                         // Textures are tricky.  A Subdivision sphere has no straight seams to which image 
-                                         // edges in UV space can be mapped.  The only way to avoid artifacts is to smoothly
-                                         // wrap & unwrap the image in reverse - displaying the texture twice on the sphere.                                                        
-        //  this.arrays.texture_coord.push( Vec.of( Math.asin( p[0]/Math.PI ) + .5, Math.asin( p[1]/Math.PI ) + .5 ) );
+                                         
           this.arrays.texture_coord.push(Vec.of(
                 0.5 - Math.atan2(p[2], p[0]) / (2 * Math.PI),
                 0.5 + Math.asin(p[1]) / Math.PI) );
         }
 
-                                                         // Fix the UV seam by duplicating vertices with offset UV:
       const tex = this.arrays.texture_coord;
       for (let i = 0; i < this.indices.length; i += 3) {
           const a = this.indices[i], b = this.indices[i + 1], c = this.indices[i + 2];
@@ -50,6 +45,7 @@ class Colored_Sphere extends Shape {
               }
           }
       }
+      // this is the end of the stuff you can ignore
 
       // add colors to buffer
       for (let p of this.arrays.position) {
@@ -82,16 +78,20 @@ class Colored_Sphere extends Shape {
       this.subdivide_triangle( ab, bc, ac, count - 1 );
     }    
 }
+// END OF EXAMPLE SUB-SHAPE
 
-
+// EXAMPLE COMBINED SHAPE
 const Snowman = 
 class Snowman extends Shape {
   constructor() {
+    // add "color" as a parameter to the super constructor
     super("position", "normal", "texture_coord", "color");
+
     const sphere4 = new Subdivision_Sphere(4);
 
     let model_transform = Mat4.identity();
     for (let i=1; i < 4; i++) {
+       // pass sub-shape color in the array of shape arguments.
        Colored_Sphere.insert_transformed_copy_into(this, [Color.of(Math.random(), Math.random(), Math.random(), 1)], model_transform);
        model_transform.post_multiply(Mat4.translation([0,-1,0]));
        model_transform.post_multiply(Mat4.scale([2,2,2]));
@@ -99,7 +99,12 @@ class Snowman extends Shape {
     }
   }
 }
+// END OF EXAMPLE COMBINED SHAPE
 
+// This is the modified shader we can use on our plants.
+// It's for any shape that has color values for each vertex 
+// and it also does Phong lighting
+// When you make one, pass it the maximum number of lights in the scene.
 const Combined_Shape_Shader = defs.Combined_Shape_Shader =
 class Combined_Shape_Shader extends Shader
 {                                  
@@ -188,7 +193,6 @@ class Combined_Shape_Shader extends Shader
   send_material( gl, gpu, material )
     {                                       // send_material(): Send the desired shape-wide material qualities to the
                                             // graphics card, where they will tweak the Phong lighting formula.                                      
-      //gl.uniform4fv( gpu.shape_color,    material.color );
       gl.uniform1f ( gpu.ambient,        material.ambient     );
       gl.uniform1f ( gpu.diffusivity,    material.diffusivity );
       gl.uniform1f ( gpu.specularity,    material.specularity );
@@ -239,7 +243,9 @@ class Combined_Shape_Shader extends Shader
       this.send_gpu_state( context, gpu_addresses, gpu_state, model_transform );
     }
 }
+// This is the end of the modified shader
 
+// EXAMPLE SCENE USING Combined_Shape_Shader
 const Combined_Shapes_Test =
 class Combined_Shapes_Test extends Scene {
   constructor()
@@ -247,33 +253,30 @@ class Combined_Shapes_Test extends Scene {
       super();
 
       this.shapes = { 'box' : new Cube(),
-                  'snowman' : new Snowman() };
+                  'snowman' : new Snowman() }; // I added my example combined shape to the shapes object
       
       const phong_shader = new defs.Phong_Shader(2);                                                      
-      const combo_shader = new defs.Combined_Shape_Shader(2);
+      const combo_shader = new defs.Combined_Shape_Shader(2); // 2 =  maximum number of lights in the scene
       const basic_shader = new defs.Basic_Shader();
       
+      // I made a material called "combo"
+      // When you make a material with the Combined_Shape_Shader, you can specify ambient, diffusivity, and specularity 
+      // The same way we do for the normal Phong Shader.
+      // Don't pass it a color
       this.materials = { plastic: new Material( phong_shader, 
                          { ambient: 0.5, diffusivity: 1, specularity: 0, color: Color.of(1,1,1,1) } ),
-                         combo: new Material( combo_shader,
-                         { ambient: 0.3, diffusivity: 0.5, specularity: 0 } ),
+                         combo: new Material( combo_shader, 
+                         { ambient: 0.3, diffusivity: 0.5, specularity: 0 } ), 
                          basic_material: new Material( basic_shader ) };
     }
 
   display( context, program_state )
     {                                                
      
-                           // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
       if( !context.scratchpad.controls ) 
-        {                       // Add a movement controls panel to the page:
+        {                       
           this.children.push( context.scratchpad.controls = new defs.Movement_Controls() ); 
-
-                    // Define the global camera and projection matrices, which are stored in program_state.  The camera
-                    // matrix follows the usual format for transforms, but with opposite values (cameras exist as 
-                    // inverted matrices).  The projection matrix follows an unusual format and determines how depth is 
-                    // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
-                    // orthographic() automatically generate valid matrices for one.  The input arguments of
-                    // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
+     
           program_state.set_camera( Mat4.look_at( Vec.of( 0,10,20 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
@@ -288,6 +291,7 @@ class Combined_Shapes_Test extends Scene {
 
       model_transform = Mat4.identity();
       model_transform.post_multiply(Mat4.translation([0,0,-2]))
+      // When you draw a shape with the combo material, don't use the override method with a color.
       this.shapes.snowman.draw( context, program_state, model_transform, this.materials.combo );
 
       model_transform.post_multiply( Mat4.translation([2,1,-5]));
