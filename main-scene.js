@@ -42,7 +42,7 @@ class Test_Scene extends Scene
 
 	const binaryGrammar = new LSystemGrammar(Binary);
 
-	const testString = binaryGrammar.calcString("0",3);
+	const testString = binaryGrammar.calcString("0",0);
 
 	// crude generation of a mapping from symbols to shape insertion functions
 
@@ -50,7 +50,8 @@ class Test_Scene extends Scene
 
 	for( let symbol in BinaryMap )
 	{
-		generatedBinaryMap[symbol] = BinaryMap[symbol][0];
+		const len = BinaryMap[symbol].length;
+		generatedBinaryMap[symbol] = BinaryMap[symbol][len-1];
 	}   
 
     this.plant = new LSystemPlant(generatedBinaryMap, testString);
@@ -82,7 +83,9 @@ class Test_Scene extends Scene
       const t = program_state.animation_time / 1000;
 
 
-    program_state.lights = [ new Light( Vec.of( 0,1,0,1 ), Color.of( 1,1,1,1 ), 100000 ) ];
+    const angle = Math.sin( t );
+    const light_position = Mat4.rotation( angle, [ 1,0,0 ] ).times( Vec.of( 0,-1,1,0 ) );
+    program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
 	let model_transform = Mat4.identity();
 
     //this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
@@ -94,6 +97,6 @@ class Test_Scene extends Scene
 
 }
 
-const Main_Scene = Height_Map_Test;
+const Main_Scene = Test_Scene;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
