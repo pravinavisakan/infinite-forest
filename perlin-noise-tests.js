@@ -202,7 +202,8 @@ class Grayscale_Grid extends Scene
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
-
+      
+      const blue = Color.of(0,0,.5,1);
       let model_transform = Mat4.identity();
 
       const light_position = Vec.of(0,-1,1,0); 
@@ -221,9 +222,6 @@ class Grayscale_Grid extends Scene
     }
 }
 
-//const Main_Scene = Height_Map_Test;
-
-//const Additional_Scenes = [];
 const Noise_Test_Scenes = { Grayscale_Grid, Height_Map_Test };
 
 export { Noise_Test_Scenes, defs }

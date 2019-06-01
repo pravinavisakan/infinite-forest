@@ -12,6 +12,7 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 import {LSystemPlant, LSystemGrammar, ForestPatch} from './l_system.js';
 import {rules, genericSymbolMaps} from './grammars_and_maps.js';
 import { Noise_Test_Scenes } from './perlin-noise-tests.js'
+import {Combined_Shapes_Test} from './custom-shaders.js'
 
 // pull rules, maps, and noise test scenes into this namespace
 const { Algae, Binary } = rules;
@@ -94,6 +95,6 @@ class Test_Scene extends Scene
 
 }
 
-const Main_Scene = Height_Map_Test;
+const Main_Scene = Combined_Shapes_Test;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
