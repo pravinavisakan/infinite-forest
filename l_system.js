@@ -68,7 +68,7 @@ class LSystemPlant extends Shape
 {
 	constructor( symbol_map, symbols)
 	{ 
-		super( "position", "normal", "texture_coord" );
+		super( "position", "normal", "texture_coord", "color" );
 
 		let transform = Mat4.identity();
 		this.branchPoints = [];

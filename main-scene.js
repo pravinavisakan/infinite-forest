@@ -3,7 +3,7 @@ import {tiny, defs} from './common.js';
 // Pull these names into this module's scope for convenience:
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron } = defs;
+const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahedron, Combined_Shape_Shader } = defs;
 
 // Now we have loaded everything in the files tiny-graphics.js, tiny-graphics-widgets.js, and assignment-4-resources.js.
 // This yielded "tiny", an object wrapping the stuff in the first two files, and "defs" for wrapping all the rest.
@@ -32,7 +32,8 @@ class Test_Scene extends Scene
 	this.box = new Cube();
 
 	const phong_shader = new defs.Phong_Shader  (2);
-    this.materials = { plastic: new Material( phong_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),};
+	const combo_shader = new defs.Combined_Shape_Shader(2);
+    this.materials = { combo : new Material( combo_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),};
 
 	// Plant generation testing
 
@@ -89,12 +90,12 @@ class Test_Scene extends Scene
     //this.box.draw( context, program_state, model_transform.times(Mat4.translation([0,-2,0])), this.materials.plastic);
 
     // draw a plant
-	this.plant.draw(context, program_state, model_transform, this.materials.plastic);
+	this.plant.draw(context, program_state, model_transform, this.materials.combo);
       
   }
 
 }
 
-const Main_Scene = Combined_Shapes_Test;
+const Main_Scene = Test_Scene;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }

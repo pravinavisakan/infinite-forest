@@ -301,4 +301,4 @@ class Combined_Shapes_Test extends Scene {
     }  
 }
 
-export { defs, Combined_Shapes_Test }
+export { defs, Combined_Shapes_Test, Combined_Shape_Shader }
