@@ -202,7 +202,8 @@ class Grayscale_Grid extends Scene
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
-      
+
+        
       const blue = Color.of(0,0,.5,1);
       let model_transform = Mat4.identity();
 
