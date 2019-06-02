@@ -223,10 +223,14 @@ class LSystemPlant extends Shape
 
 //TODO A class that creates a bunch of LSystemPlants given a symbol map, a grammar, a set of heights, 
 // maybe perlin noise data for density and type
+// NOTE: is not actually a shape - it contains an array of shapes and translations, and when draw is called, is displays them
 const ForestPatch =  
-class ForestPatch extends Shape
+class ForestPatch 
 {
+	constructor(heights){
+		
 
+	}
 }
 
 export {LSystemGrammar, LSystemPlant, ForestPatch }
