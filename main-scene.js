@@ -159,10 +159,18 @@ class Solar_System extends Scene
       return points.map( p => Mat4.inverse( m ).times( p.to4(1) ) )
                    .map( p => p.map( x => x/p[3] ).to3() );
     }
+
+
+
   inside_frustum(object, program_state) {
 
-    const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [1, 1, -1], [1, 1, -1],
-                                             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
+    const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+                                           [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
+
+                                           // The 8 points in order:
+                                           // flb, frb, frt, flt, nlb, nrb, nrt, nlt
+                                           // However, they change once you put them into frustum_corner_points, like so:
+                                           // nlb, nrb, nlt, nrt, flb, frb, flt, frt
 
     const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
     //console.log(frustum_corner_points)
@@ -173,8 +181,87 @@ class Solar_System extends Scene
     let modelview_matrix = camera_inverse.post_multiply(model_transform);
     let object_location = modelview_matrix.times(Vec.of(0,0,0,1)); // object centered at origin
     //console.log(object_location)
+
+    // If there is a more efficient way, I cannot think of it right now.
+
+    let near_normal = this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] );
+    let far_normal = this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] );
+    let right_normal = this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] );
+    let left_normal = this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] );
+    let top_normal = this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] );
+    let bottom_normal = this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] );
+
+    let near_d = this.set3Points_get_d( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] );
+    let far_d = this.set3Points_get_d( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] );
+    let right_d = this.set3Points_get_d( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] );
+    let left_d = this.set3Points_get_d( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] );
+    let top_d = this.set3Points_get_d( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] );
+    let bottom_d = this.set3Points_get_d( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] );
+
+   
+
+
+
+
+  //  let test = near_normal.dot(object);
+
+
+// So if I have the a, b, c values as a Vec3, then I would have to do a dot product between the a,b,c normal and the query point. 
+// Then, add d (which is already negative) to it. Finally, compare that value to 0??? If it is above 0, then something. If it is below 0, then something.
+
+// object is a Mat4, I think. how can I grab the position of the object? If it is Mat4, then it should be in the 4th column.
+
+
+    let is_inside_frustum = false; // by default we put false.
+    // 
+
+
+/*
+    if (this.set3DPoints_get_d( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] ))
+    {
+      in_inside_frustum = true;
+    }
+    else if (true)
+    {
+
+    }
+*/
+
+
     return true; // for now
+
+    // return is_inside_frustum
   }
+
+
+
+  set3Points_get_n( v1, v2, v3)
+  {
+    let vectorp_1 = v1.minus(v2);
+    let vectorp_2 = v1.minus(v3);
+
+    let normal_vectorp = vectorp_1.cross(vectorp_2); // cross product. this gives the normal vector, or (a, b, c) in the equation.
+    
+     //console.log(normal_vectorp);
+    // console.log(normal_vectorp.normalized());
+
+    return normal_vectorp; // RETURN A VEC3.
+  }
+
+    set3Points_get_d( v1, v2, v3)
+  {
+    let normal_vectorp = this.set3Points_get_n(v1, v2, v3);
+    
+     //console.log(normal_vectorp);
+     //console.log(normal_vectorp.normalized());
+
+    let d = -1 * normal_vectorp.dot(v1); // dot product. gives a SCALAR.
+    return d; // RETURN A SCALAR.
+  }
+
+  // 
+
+
 
 // Display() will have to be called.
   display( context, program_state )
@@ -356,7 +443,7 @@ class Solar_System extends Scene
 
       const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
 
-
+/*
 for (let k = 0; k < 6; k++)
   {
     if (k == 0) 
@@ -364,7 +451,7 @@ for (let k = 0; k < 6; k++)
 
     }
   }
-
+*/
       var aFrustum = new Frustum();
 
       aFrustum.set_frustum_coords(frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2], frustum_corner_points[3],
@@ -374,13 +461,9 @@ for (let k = 0; k < 6; k++)
 // Curses... I ran into a problem. To fix it, I will no longer be able to adjust the angle of the field of view.
 // AKA the problem lies with scaling the Trapezoids. I had previously hard-coded them so that the top side is length 2 and bottom side is length 4. With that, scaling will make the ratio
 // of 2:4 always remain.
-
 // That can be remedied by no longer allowing the player to change the frustum view. 
 // I decided to use a distance of 100 between the near and far planes. Now, the Trapezoids have been given 0.2 instead of 1 to reflect that change. See Trapezoid class for more.
-
 // Depending on how large the far plane is compared to the near plane, the vertices for the Trapezoids will have to change accordingly.
-
-
 // 2 / x
 
 
@@ -390,9 +473,10 @@ for (let k = 0; k < 6; k++)
       let total_objects = this.object_container.length;
       for (let i=0; i < total_objects; i++) {
         let object = this.object_container[i];
+        // we check to see if the object is inside frustum. If true, then draw object.
         if (this.inside_frustum(object, program_state)) {
           object.shape.draw(context, program_state, object.model_transform, this.materials.plastic);
-          objects_drawn++;
+          objects_drawn++; // debug counter
         }
       }
 
@@ -541,7 +625,7 @@ class Frustum extends Shape
       this.fbr;
                                           // Specify the 4 square corner locations, and match those up with normal vectors:
      // this.arrays.position      = Vec.cast( [-1,-1,0], [1,-1,0], [-1,1,0], [1,1,0] );
-      this.arrays.position = Vec.cast( [-0.1,this.nbr,0], [0.1,1,0], [2,-1,0], [0,-1,0], [-2,-1,0] ) // Original values were 1 where 0.1 are currently. 
+      this.arrays.position = Vec.cast( [-0.1,1,0], [0.1,1,0], [2,-1,0], [0,-1,0], [-2,-1,0] ) // Original values were 1 where 0.1 are currently. 
       this.arrays.normal        = Vec.cast( [0,0,1],   [0,0,1],  [0,0,1],  [0,0,1], [0,0,1] );
                                                           // Arrange the vertices into a square shape in texture space too:
       this.arrays.texture_coord = Vec.cast( [0,1],     [1,1],    [1,0],    [0.5,0], [0,0]   );
