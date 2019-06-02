@@ -38,6 +38,15 @@ const insertShape = (shape, shape_args, shape_transformation = Mat4.identity(), 
 	}
 }
 
+// a new function - returns a function that inserts a shape based on an obj file (to handle asynchronous file load)
+const insertObj = (filename, shape_transformation = Mat4.identity(), pre_transformation = Mat4.identity(), post_transformation = Mat4.identity(), color) => {
+	return (model_transform, recipient) => {
+		let transform = model_transform.times(pre_transformation)
+		recipient.load_obj_file(filename, transform, shape_transformation, color);
+		return transform.times(post_transformation);
+	}
+}
+
 //branchOut - pushes current location to the recipient's stack for later, and rotates for a given axis and angle
 const branchOut = (angle, axis) => {
 	return (model_transform, recipient) => {
@@ -71,9 +80,14 @@ branchOutFunctions.push(branchOut(Math.PI/4, Vec.of(0,0,1)));
 // a simple endBranch that rotates right 45 degrees along z
 endBranchFunctions.push(endBranch(-Math.PI/4, Vec.of(0,0,1)));
 
-// TODO add some sick custom shapes here, and add the appropriate symbol functions
+// TODO add some more sick custom shapes here, and add the appropriate symbol functions
+
+// adds an insertion function for custom leaf 1, to be used in plant generation later
+// pre Mat4.scale([.05,.05,.05]).times(Mat4.translation([5,5,0]))
+// post Mat4.scale([20,20,20]).times(Mat4.translation([0,0,0])))
+insertLeafFunctions.push(insertObj("assets/leaf1.obj",Mat4.scale([.05,.05,.05]), Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), green));
+
 
 
 // exports
 export {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranchFunctions}
-
