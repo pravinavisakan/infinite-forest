@@ -111,6 +111,11 @@ class Solar_System extends Scene
         this.star_matrices.push( Mat4.rotation( Math.PI/2 * (Math.random()-.5), Vec.of( 0,1,0 ) )
                          .times( Mat4.rotation( Math.PI/2 * (Math.random()-.5), Vec.of( 1,0,0 ) ) )
                          .times( Mat4.translation([ 0,0,-150 ]) ) );
+      
+      this.object_container = []; 
+// I'm making a temporary container for object, bc I don't want to try and figure out hash table stuff
+// at the same time as frustum culling stuff... so this is just an array. we have to iterate through the whole thing
+      this.generate_test_grid(); // We only need to call this function once
     }
   make_control_panel()
     {                                 // make_control_panel(): Sets up a panel of interactive HTML elements, including
@@ -120,23 +125,30 @@ class Solar_System extends Scene
        // this.key_triggered_button( 
     }
 
-    generate_test_grid(context, program_state)
+    generate_test_grid()
     {
       let objects_rendered = 0;
       let test_grid_transform = Mat4.identity();
-      test_grid_transform = test_grid_transform.times(Mat4.translation( [-4, 0, -4] ));
+      test_grid_transform = test_grid_transform.times(Mat4.translation( [-4, 40, -4] ));
 
-    for (let j = 0; j < 10; j++)
-    {
-          test_grid_transform = test_grid_transform.times(Mat4.translation( [0, 0, 4] ));
-          for (let k = 0; k < 10; k++)
-          {
-            test_grid_transform = test_grid_transform.times(Mat4.translation( [0, 4, 0]));
-            this.shapes.box.draw( context , program_state ,test_grid_transform , this.materials.plastic );
-            objects_rendered++;
-          }
-          test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -40, 0] ) );
-    }
+      for (let j = 0; j < 10; j++)
+      {
+            test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -4, 0] ));
+            for (let k = 0; k < 10; k++)
+            {
+              test_grid_transform = test_grid_transform.times(Mat4.translation( [4, 0, 0]));
+              //this.shapes.box.draw( context , program_state ,test_grid_transform , this.materials.plastic );
+              //objects_rendered++;
+
+              // instead of drawing all the objects, store their radius and position
+              let object_radius = Math.sqrt(2); // max distance from center of object, in model space
+              let box = new Cube();
+              this.object_container.push({shape  : box, 
+                                          radius : object_radius, 
+                                          model_transform : test_grid_transform.copy()})
+            }
+            test_grid_transform = test_grid_transform.times(Mat4.translation( [-40, 0, 0] ) );
+      }
 
 
     }
@@ -147,7 +159,22 @@ class Solar_System extends Scene
       return points.map( p => Mat4.inverse( m ).times( p.to4(1) ) )
                    .map( p => p.map( x => x/p[3] ).to3() );
     }
+  inside_frustum(object, program_state) {
 
+    const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [1, 1, -1], [1, 1, -1],
+                                             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
+
+    const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
+    //console.log(frustum_corner_points)
+
+    // convert object location from model space to camera space
+    let camera_inverse = program_state.camera_inverse.copy();
+    let model_transform = object.model_transform.copy();
+    let modelview_matrix = camera_inverse.post_multiply(model_transform);
+    let object_location = modelview_matrix.times(Vec.of(0,0,0,1)); // object centered at origin
+    //console.log(object_location)
+    return true; // for now
+  }
 
 // Display() will have to be called.
   display( context, program_state )
@@ -241,7 +268,7 @@ class Solar_System extends Scene
 
 
 
-      this.generate_test_grid(context, program_state);
+      //this.generate_test_grid(context, program_state);
 
       let new_camera_transform = Mat4.identity();
 
@@ -357,10 +384,19 @@ for (let k = 0; k < 6; k++)
 // 2 / x
 
 
+      // iterate through all objects
+      // if the object is in the frustum, draw it
+      let objects_drawn = 0;
+      let total_objects = this.object_container.length;
+      for (let i=0; i < total_objects; i++) {
+        let object = this.object_container[i];
+        if (this.inside_frustum(object, program_state)) {
+          object.shape.draw(context, program_state, object.model_transform, this.materials.plastic);
+          objects_drawn++;
+        }
+      }
 
-
-
-
+      //console.log(objects_drawn);
 
 
       // ***** BEGIN TEST SCENE *****               
