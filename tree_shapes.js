@@ -78,7 +78,9 @@ endBranchFunctions.push(endBranch(-Math.PI/4, Vec.of(0,0,1)));
 // TODO add some more sick custom shapes here, and add the appropriate symbol functions
 
 // adds an insertion function for custom leaf 1, to be used in plant generation later
-insertLeafFunctions.push(insertObj("assets/leaf1.obj",undefined, Mat4.scale([.05,.05,.05]).times(Mat4.translation([5,5,0])), Mat4.scale([20,20,20]).times(Mat4.translation([0,0,0]))));
+// pre Mat4.scale([.05,.05,.05]).times(Mat4.translation([5,5,0]))
+// post Mat4.scale([20,20,20]).times(Mat4.translation([0,0,0])))
+insertLeafFunctions.push(insertObj("assets/teapot.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])));
 
 
 
