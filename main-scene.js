@@ -239,8 +239,12 @@ class World_Patch_Test extends Scene {
       
       // construct two chunks of land
       this.noiseGen = new Noise_Generator(50);
-      this.grid_rows=60;
-      this.grid_columns=30;
+
+      this.patch_rows = 4; // number of patches in a row
+      this.patch_columns = 5; // number of patches in a column
+      this.patch_size = 20; // length/width of a single patch
+      this.grid_rows=this.patch_rows*this.patch_size;
+      this.grid_columns=this.patch_rows*this.patch_size;
 
       // level 1
       let scale1 = 0.5;
@@ -290,8 +294,142 @@ class World_Patch_Test extends Scene {
       const combo_shader = new defs.Combined_Shape_Shader(2);     
       this.materials = { plastic: new Material( phong_shader, 
                          { ambient: 0.5, diffusivity: 0.7, specularity: 1, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ),
-                         combo : new Material( combo_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ) };        
+                         combo : new Material( combo_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ),
+                         dirt: new Material( phong_shader,
+              			 { ambient: .3, diffusivity: 1, specularity: 0, color: Color.of(0.545098, 0.270588, 0.0745098, 1) } ) 
+              		   }; 
+                          
+      // array of height map objects
+      this.height_maps = []
+      let start_row = 0; // for indexing the final_heights array
+      let start_col = 0;
+      let temp = []
+      for (let r=0; r < this.patch_rows; r++) {
+      	for (let c=0; c < this.patch_columns; c++) {
+      		// subset the heights arrays
+      		temp = final_heights.slice(start_row, start_row+this.patch_size) // subset rows
+      		let curr_heights = []
+      		for (let i=0; i < this.patch_size; i++) {
+				curr_heights.push(temp[i].slice(start_col, start_col+this.patch_size)) // subset columns
+      		}
+      		 
+			this.height_maps.push(new Height_Map(this.patch_size, this.patch_size, curr_heights))
+
+			start_col += this.patch_size-1
+      	}
+      	start_row += this.patch_size-1
+      	start_col = 0
+      }
+  
+      // frustum culling 
+      this.object_container = []; 
+      this.generate_grid();       
     }
+	// helper functions for frustum culling
+
+    generate_grid()
+    {
+      let test_grid_transform = Mat4.identity();
+
+      for (let r=0; r < this.patch_rows; r++)
+      {
+            test_grid_transform = test_grid_transform.times(Mat4.translation( [1, 0, 0] ));
+            for (let c=0; c < this.patch_columns; c++)
+            {
+              test_grid_transform = test_grid_transform.times(Mat4.translation( [0, 1, 0]));
+
+              // instead of drawing all the objects, store their radius and position
+              let object_radius = Math.sqrt(2); // max distance from center of object, in model space
+              this.object_container.push({shape  : this.height_maps[r*this.patch_columns + c], 
+                                          radius : object_radius, 
+                                          model_transform : test_grid_transform.copy()})
+            }
+            test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -this.patch_columns, 0] ) );
+      }
+
+
+    }
+
+
+  derive_frustum_points_from_matrix( m, points )
+    {
+      return points.map( p => Mat4.inverse( m ).times( p.to4(1) ) )
+                   .map( p => p.map( x => x/p[3] ).to3() );
+    }
+
+
+
+  inside_frustum(object, program_state) {
+
+    const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1],
+                                           [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
+
+                                           // The 8 points in order:
+                                           // flb, frb, frt, flt, nlb, nrb, nrt, nlt
+                                           // However, they change once you put them into frustum_corner_points, like so:
+                                           // nlb, nrb, nlt, nrt, flb, frb, flt, frt
+
+    const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
+
+    // convert object location from model space to camera space
+    let camera_inverse = program_state.camera_inverse.copy();
+    let model_transform = object.model_transform.copy();
+    let modelview_matrix = camera_inverse.post_multiply(model_transform);
+    let object_location = modelview_matrix.times(Vec.of(0,0,0,1)); // object centered at origin
+    let radius_in_model_space = Vec.of(object.radius, 0, 0);
+    let object_radius = modelview_matrix.times(radius_in_model_space);
+
+    let normals = []
+
+    normals.push( this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] ) );
+
+    let d_values = []
+
+    d_values.push( this.set3Points_get_d( normals[0], frustum_corner_points[0] ) );
+    d_values.push( this.set3Points_get_d( normals[1], frustum_corner_points[5] ) );
+    d_values.push( this.set3Points_get_d( normals[2], frustum_corner_points[1] ) );
+    d_values.push( this.set3Points_get_d( normals[3], frustum_corner_points[4] ) );
+    d_values.push( this.set3Points_get_d( normals[4], frustum_corner_points[2] ) );
+    d_values.push( this.set3Points_get_d( normals[5], frustum_corner_points[1] ) );
+
+    let is_inside_frustum = true; // by default we put true.
+
+    // get object's relationship to each plane
+    for (let i = 0; i < 6; i++) {
+      // tbh, not sure why we have to scale up the object radius.
+      // I just know the shapes at the edges don't get drawn if we follow the formula that makes more sense...
+      let correction_factor = 300;
+      if (normals[i].dot(object_location) + d_values[i] - correction_factor*object_radius[0] > 0) {
+        is_inside_frustum = false;
+        break;
+      }
+    }
+
+    return is_inside_frustum
+  }
+
+  set3Points_get_n( v1, v2, v3)
+  {
+    let vectorp_1 = v1.minus(v2);
+    let vectorp_2 = v1.minus(v3);
+
+    let normal_vectorp = vectorp_1.cross(vectorp_2); // cross product. this gives the normal vector, or (a, b, c) in the equation.
+
+    return normal_vectorp; // RETURN A VEC3.
+  }
+
+    set3Points_get_d( n, p )
+  {
+    let normal_vectorp = n;
+
+    let d = -1 * normal_vectorp.dot(p); // dot product. gives a SCALAR.
+    return d; // RETURN A SCALAR.
+  }
 
     display(context, program_state) {
 
@@ -337,7 +475,21 @@ class World_Patch_Test extends Scene {
       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
 
       //model_transform.post_multiply( Mat4.translation([1,0,0]));
-     // this.shapes.height_mapB.draw( context, program_state, model_transform, this.materials.plastic ); 
+      //this.shapes.height_mapB.draw( context, program_state, model_transform, this.materials.plastic ); 
+
+      // iterate through all objects
+      // if the object is in the frustum, draw it
+      let objects_drawn = 0;
+      let total_objects = this.object_container.length;
+      for (let i=0; i < total_objects; i++) {
+        let object = this.object_container[i];
+        // we check to see if the object is inside frustum. If true, then draw object.
+        if (this.inside_frustum(object, program_state)) {
+          object.shape.draw(context, program_state, object.model_transform, this.materials.dirt);
+          objects_drawn++;
+        }
+      }
+console.log(objects_drawn)
     }
 }
 
