@@ -275,11 +275,11 @@ class World_Patch_Test extends Scene {
 	
       //type and density values 
       let varT= 2;
-      let gridT = new Noise_Grid(this.grid_rows,this.grid_columns,varT,this.noiseGen);
+      let gridT = new Noise_Grid(2,2,varT,this.noiseGen);
 
 
       let varD= 2;
-      let gridD = new Noise_Grid(this.grid_rows,this.grid_columns,varD,this.noiseGen);
+      let gridD = new Noise_Grid(2,2,varD,this.noiseGen);
 
       const plant_type = gridT.noise[0][0];
       const plant_density = gridD.noise[0][0];
