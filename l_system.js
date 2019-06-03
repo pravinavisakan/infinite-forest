@@ -34,7 +34,7 @@ const LSystemGrammar = class LSystemGrammar
 	*/
 	calcString( init, depth )
 	{
-		if (depth == 0) return init;
+		if (depth <= 0) return init;
 
 		let output = "";
 
