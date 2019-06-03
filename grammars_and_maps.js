@@ -1,4 +1,4 @@
-import {insertBranchFunctions, insertLeafFunctions, insertFruitFunctions, insertFlowerFunctions, branchOutFunctions, endBranchFunctions} from './tree_shapes.js';
+import {insertBranchFunctions, insertLeafFunctions, insertFlowerFunctions, insertFruitFunctions, branchOutFunctions, endBranchFunctions} from './tree_shapes.js';
 
 //INFO
 // File for the rules of grammars and symbol maps for use with L System Plant Rendering

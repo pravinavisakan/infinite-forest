@@ -127,4 +127,4 @@ insertFruitFunctions.push(insertObj("assets/fruit2.obj",undefined, Mat4.translat
 
 
 // exports
-export {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranchFunctions}
+export {insertBranchFunctions, insertLeafFunctions, insertFlowerFunctions, insertFruitFunctions, branchOutFunctions, endBranchFunctions}
