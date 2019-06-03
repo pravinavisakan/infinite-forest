@@ -15,8 +15,11 @@ import { Noise_Test_Scenes, defs as noise_defs } from './perlin-noise-tests.js'
 import {Combined_Shapes_Test} from './custom-shaders.js'
 
 // pull rules, maps, and noise test scenes into this namespace
-const { Algae, Binary } = rules;
-const { AlgaeMap, BinaryMap } = genericSymbolMaps;
+const Algae =  rules[0];
+const Binary = rules[1];
+const AlgaeMap = genericSymbolMaps[0];
+const BinaryMap = genericSymbolMaps[1];
+
 const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
 
 // perlin noise imports
@@ -248,17 +251,22 @@ class World_Patch_Test extends Scene {
       let final_heightsA = final_heights.slice(0,this.grid_rows/2+1);
       let final_heightsB = final_heights.slice(this.grid_rows/2,this.grid_rows);
 
+	this.shapes = { 'height_mapA' : new Height_Map(this.grid_rows/2+1, this.grid_columns, final_heightsA),
+			  		'height_mapB' : new Height_Map(this.grid_rows/2, this.grid_columns, final_heightsB)}; 
+
       // construct a chunk of forest
-	  
+	  const plant_type = 0.5;
+	  const plant_density = 0.3;
 
-      // misc
+	  this.shapes.forestA = new ForestPatch(plant_type, plant_density, final_heightsA);
 
-      this.shapes = { 'height_mapA' : new Height_Map(this.grid_rows/2+1, this.grid_columns, final_heightsA),
-                      'height_mapB' : new Height_Map(this.grid_rows/2, this.grid_columns, final_heightsB)}; 
+      // misc materials
 
-      const phong_shader = new defs.Phong_Shader  (2);     
+      const phong_shader = new defs.Phong_Shader  (2);
+      const combo_shader = new defs.Combined_Shape_Shader(2);     
       this.materials = { plastic: new Material( phong_shader, 
-                         { ambient: 0.5, diffusivity: 0.7, specularity: 1, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ) };        
+                         { ambient: 0.5, diffusivity: 0.7, specularity: 1, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ),
+                         combo : new Material( combo_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ) };        
     }
 
     display(context, program_state) {
@@ -284,14 +292,16 @@ class World_Patch_Test extends Scene {
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
 
       let model_transform = Mat4.identity();
+
+      // display trees above that land
+      this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
+      
+
       model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
 
       // display a patch of terrain/land
-      model_transform.post_multiply( Mat4.scale([20,20,20]));
+      model_transform.post_multiply( Mat4.scale([30,30,30]));
       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
-
-      // display trees above that land
-      
 
       //model_transform.post_multiply( Mat4.translation([1,0,0]));
      // this.shapes.height_mapB.draw( context, program_state, model_transform, this.materials.plastic ); 
