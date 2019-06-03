@@ -245,16 +245,22 @@ class Terrain extends Scene
       this.patch_size = 20; // length/width of a single patch
 
       // height map level 1
-      let scale1 = 1; // 6
+      let scale1 = 2; 
       let var1 = 2;
       let grid1 = new Noise_Grid(this.patch_rows*this.patch_size,this.patch_columns*this.patch_size,var1,this.noiseGen);
       let heights1 = grid1.noise.map(a => a.map(b => (b+1)*scale1));
 
 	  // height map level 2
-	  let scale2 = 0;
+	  let scale2 = .4;
 	  let var2 = 4;
 	  let grid2 = new Noise_Grid(this.patch_rows*this.patch_size,this.patch_columns*this.patch_size,var2,this.noiseGen);
 	  let heights2 = grid2.noise.map(a => a.map(b => (b+1)*scale2));
+
+	  // height map level 3
+	  let scale3 = 0.04;
+	  let var3 = 10;
+	  let grid3 = new Noise_Grid(this.patch_rows*this.patch_size,this.patch_columns*this.patch_size,var3,this.noiseGen);
+	  let heights3 = grid3.noise.map(a => a.map(b => (b+1)*scale3));
 
 	  let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]));
       // array of height map objects
