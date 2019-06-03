@@ -233,7 +233,9 @@ class ForestPatch
 		
 		//create grammar object, and retrieve a symbol mapping for this patch of trees
 
-		const grammar_index = Math.floor(type * rules.length); //theoretically, the length of rules and mappings should be the same
+		const scaled_type = ((type + 1)/2);
+		const scaled_density = ((density + 1)/2);
+		const grammar_index = Math.floor(scaled_type * rules.length); //theoretically, the length of rules and mappings should be the same
 
 		const grammar = new LSystemGrammar(rules[grammar_index]);
 		const starter = startSymbols[grammar_index];
@@ -243,7 +245,7 @@ class ForestPatch
 		for( let symbol in genericMap )
 		{
 			const len = genericMap[symbol].length;
-			generatedMapping[symbol] = genericMap[symbol][Math.floor(Math.random()*type*len) % len]; //use the type parameter and a little randomness to select the shape insertion functions
+			generatedMapping[symbol] = genericMap[symbol][Math.floor(Math.random()*scaled_type*len) % len]; //use the type parameter and a little randomness to select the shape insertion functions
 		}
 
 		//iterate over heights, create a tree for every other point if a random value is below provided density
@@ -292,7 +294,7 @@ class ForestPatch
 				}
 				counter = 0;
 
-				const checkExpression = (Math.random() < density);
+				const checkExpression = (Math.random() < scaled_density);
 				const temp_transform = Mat4.translation([point[0]*this.scaleFactor, point[1]*this.scaleFactor, point[2]*this.scaleFactor]);
 
 				if(checkExpression){

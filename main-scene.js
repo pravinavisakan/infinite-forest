@@ -256,10 +256,19 @@ class World_Patch_Test extends Scene {
 			  		'height_mapB' : new Height_Map(this.grid_rows/2, this.grid_columns, final_heightsB)}; 
 
       // construct a chunk of forest
-	  const plant_type = 0.5;
-	  const plant_density = 0.3;
+	
+      //type and density values 
+      let varT= 2;
+      let gridT = new Noise_Grid(this.grid_rows,this.grid_columns,varT,this.noiseGen);
 
-	  this.shapes.forestA = new ForestPatch(plant_type, plant_density, this.shapes.height_mapA);
+
+      let varD= 2;
+      let gridD = new Noise_Grid(this.grid_rows,this.grid_columns,varD,this.noiseGen);
+
+      const plant_type = gridT.noise[0][0];
+      const plant_density = gridD.noise[0][0];
+
+      this.shapes.forestA = new ForestPatch(plant_type, plant_density, this.shapes.height_mapA);
 
       // misc materials
 
