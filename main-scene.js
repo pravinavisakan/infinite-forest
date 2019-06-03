@@ -250,19 +250,19 @@ class World_Patch_Test extends Scene {
       let scale1 = 0.5;
       let var1 = 2;
       let grid1 = new Noise_Grid(this.grid_rows,this.grid_columns,var1,this.noiseGen);
-      let heights1 = grid1.noise.map(a => a.map(b => (b+1)*scale1));
+      let heights1 = grid1.noise.map(a => a.map(b => b*scale1));
 
       // level 2
       let scale2 = 0.05;
       let var2 = 5;
       let grid2 = new Noise_Grid(this.grid_rows,this.grid_columns,var2,this.noiseGen);
-      let heights2 = grid2.noise.map(a => a.map(b => (b+1)*scale2));
+      let heights2 = grid2.noise.map(a => a.map(b => b*scale2));
 
       // level 3
       let scale3 = 0.01;
       let var3 = 25;
       let grid3 = new Noise_Grid(this.grid_rows,this.grid_columns,var3,this.noiseGen);
-      let heights3 = grid3.noise.map(a => a.map(b => (b+1)*scale3));
+      let heights3 = grid3.noise.map(a => a.map(b => b*scale3));
 
       // combined height
       let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]+heights3[i][j]));
@@ -277,11 +277,11 @@ class World_Patch_Test extends Scene {
 	
       //type and density values 
       let varT= 2;
-      let gridT = new Noise_Grid(this.grid_rows,this.grid_columns,varT,this.noiseGen);
+      let gridT = new Noise_Grid(this.patch_rows,this.patch_columns,varT,this.noiseGen);
 
 
       let varD= 2;
-      let gridD = new Noise_Grid(this.grid_rows,this.grid_columns,varD,this.noiseGen);
+      let gridD = new Noise_Grid(this.patch_rows,this.patch_columns,varD,this.noiseGen);
 
       const plant_type = gridT.noise[0][0];
       const plant_density = gridD.noise[0][0];
@@ -300,6 +300,7 @@ class World_Patch_Test extends Scene {
               		   }; 
                           
       // array of height map objects
+      this.forests = []
       this.height_maps = []
       let start_row = 0; // for indexing the final_heights array
       let start_col = 0;
@@ -313,7 +314,9 @@ class World_Patch_Test extends Scene {
 				curr_heights.push(temp[i].slice(start_col, start_col+this.patch_size)) // subset columns
       		}
       		 
-			this.height_maps.push(new Height_Map(this.patch_size, this.patch_size, curr_heights))
+			let new_height_map = new Height_Map(this.patch_size, this.patch_size, curr_heights);
+			this.height_maps.push(new_height_map);
+			this.forests.push(new ForestPatch(gridT.noise[r][c], gridD.noise[r][c], new_height_map));
 
 			start_col += this.patch_size-1
       	}
@@ -330,19 +333,25 @@ class World_Patch_Test extends Scene {
     generate_grid()
     {
       let test_grid_transform = Mat4.identity();
+      // scale up
+      test_grid_transform.post_multiply(Mat4.scale([20,20,20]));
+      // rotate
+      test_grid_transform.post_multiply(Mat4.rotation(-Math.PI/2, [1,0,0]));
+	  // move down
+      test_grid_transform.post_multiply(Mat4.translation([-1,-1,0]));
 
       for (let r=0; r < this.patch_rows; r++)
       {
+      		
             test_grid_transform = test_grid_transform.times(Mat4.translation( [1, 0, 0] ));
             for (let c=0; c < this.patch_columns; c++)
             {
               test_grid_transform = test_grid_transform.times(Mat4.translation( [0, 1, 0]));
-
               // instead of drawing all the objects, store their radius and position
               let object_radius = Math.sqrt(2); // max distance from center of object, in model space
               this.object_container.push({shape  : this.height_maps[r*this.patch_columns + c], 
                                           radius : object_radius, 
-                                          model_transform : test_grid_transform.copy()})
+                                          object_transform : test_grid_transform.copy()})
             }
             test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -this.patch_columns, 0] ) );
       }
@@ -373,9 +382,9 @@ class World_Patch_Test extends Scene {
 
     // convert object location from model space to camera space
     let camera_inverse = program_state.camera_inverse.copy();
-    let model_transform = object.model_transform.copy();
+    let model_transform = object.object_transform.copy();
     let modelview_matrix = camera_inverse.post_multiply(model_transform);
-    let object_location = modelview_matrix.times(Vec.of(0,0,0,1)); // object centered at origin
+    let object_location = modelview_matrix.times(Vec.of(.5,.5,0)); // center of a patch in model space = [.5, .5, 1]
     let radius_in_model_space = Vec.of(object.radius, 0, 0);
     let object_radius = modelview_matrix.times(radius_in_model_space);
 
@@ -403,14 +412,16 @@ class World_Patch_Test extends Scene {
     for (let i = 0; i < 6; i++) {
       // tbh, not sure why we have to scale up the object radius.
       // I just know the shapes at the edges don't get drawn if we follow the formula that makes more sense...
-      let correction_factor = 300;
-      if (normals[i].dot(object_location) + d_values[i] - correction_factor*object_radius[0] > 0) {
+      let correction_factor = 1;
+      let test = correction_factor*object_radius[0];
+      if (normals[i].dot(object_location) + d_values[i] - test > 0) {
         is_inside_frustum = false;
         break;
       }
     }
 
-    return is_inside_frustum
+    //return is_inside_frustum;
+    return true; // for now, while working on other stuff
   }
 
   set3Points_get_n( v1, v2, v3)
@@ -462,34 +473,45 @@ class World_Patch_Test extends Scene {
       let model_transform = Mat4.identity();
       this.box.draw( context, program_state, model_transform, this.materials.plastic ); 
 
-      // display trees above that land
-	
-      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
-      this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
       
+      /* this works. this is what we started with. It draws trees in two rows above land. 
+      however, I don't want to keep this exact order of transformations because I want to draw land first,
+      since the height_map model_transforms are stored with the height_maps */
+//       model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
+//       this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
+//       model_transform.post_multiply( Mat4.scale([30,30,30]));
+//       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.dirt );   
 
-
-      //model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
-      // display a patch of terrain/land
-      model_transform.post_multiply( Mat4.scale([30,30,30]));
-      this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
-
-      //model_transform.post_multiply( Mat4.translation([1,0,0]));
-      //this.shapes.height_mapB.draw( context, program_state, model_transform, this.materials.plastic ); 
+      /* this works, sort of. all the trees get drawn in one row at the edge of the patch */
+//       model_transform.post_multiply( Mat4.scale([30,30,30]));
+//       this.height_maps[0].draw(context,program_state, model_transform, this.materials.dirt);
+//       model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
+// 	  this.forests[0].draw(context, program_state, model_transform, this.materials.combo);    
+  
+      // this also works.
+      //model_transform = this.object_container[0].object_transform.copy();
+      //model_transform.post_multiply( Mat4.scale([30,30,30]));
+      //this.height_maps[0].draw(context,program_state, model_transform, this.materials.dirt);
+      //model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
+	  //this.forests[0].draw(context, program_state, model_transform, this.materials.combo);
 
       // iterate through all objects
       // if the object is in the frustum, draw it
-      let objects_drawn = 0;
+      let patches_drawn = 0;
       let total_objects = this.object_container.length;
       for (let i=0; i < total_objects; i++) {
         let object = this.object_container[i];
+        let forest = this.forests[i];
+        model_transform = object.object_transform.copy();
         // we check to see if the object is inside frustum. If true, then draw object.
         if (this.inside_frustum(object, program_state)) {
-          object.shape.draw(context, program_state, object.model_transform, this.materials.dirt);
-          objects_drawn++;
+          object.shape.draw(context, program_state, model_transform, this.materials.dirt);
+          model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
+          forest.draw(context, program_state, model_transform, this.materials.combo);
+          patches_drawn++;
         }
       }
-console.log(objects_drawn)
+	console.log(patches_drawn)
     }
 }
 
