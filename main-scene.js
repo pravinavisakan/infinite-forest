@@ -12,7 +12,10 @@ const { Cube, Subdivision_Sphere, Cylindrical_Tube, Triangle, Windmill, Tetrahed
 import {LSystemPlant, LSystemGrammar, ForestPatch} from './l_system.js';
 import {rules, genericSymbolMaps} from './grammars_and_maps.js';
 import { Noise_Test_Scenes, defs as noise_defs } from './perlin-noise-tests.js'
+import {Height_Map} from './perlin-noise-tests.js'
 import {Combined_Shapes_Test} from './custom-shaders.js'
+import {colored_shapes_defs} from './colored-shapes.js'
+import {Noise_Grid, Noise_Generator} from './perlin-noise.js'
 
 // pull rules, maps, and noise test scenes into this namespace
 const Algae =  rules[0];
@@ -21,6 +24,9 @@ const AlgaeMap = genericSymbolMaps[0];
 const BinaryMap = genericSymbolMaps[1];
 
 const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
+const { Algae, Binary } = rules;
+const { AlgaeMap, BinaryMap } = genericSymbolMaps;
+const { cCube } = colored_shapes_defs;
 
 // perlin noise imports
 import { Noise_Grid, Noise_Generator } from './perlin-noise.js';
@@ -280,6 +286,7 @@ class World_Patch_Test extends Scene {
     }
 
     display(context, program_state) {
+
                            // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
       if( !context.scratchpad.controls ) 
         {                       // Add a movement controls panel to the page:
@@ -292,11 +299,23 @@ class World_Patch_Test extends Scene {
                     // orthographic() automatically generate valid matrices for one.  The input arguments of
                     // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
           program_state.set_camera( Mat4.look_at( Vec.of( 80,50,70 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
 
       const t = this.t = program_state.animation_time/1000;
+                                                                      // Find how much time has passed in seconds; we can use
+                                                                      // time as an input when calculating new transforms:
+
+
+      const blue = Color.of( 0,0,.5,1 ), yellow = Color.of( .5,.5,0,1 ), yellow_glass = Color.of( 1, 1, 0, 0.4 );
+
+                                    // Variable model_transform will be a local matrix value that helps us position shapes.
+                                    // It starts over as the identity every single frame - coordinate axes at the origin.
+      let model_transform = Mat4.identity(); 
+
+   	  const t = this.t = program_state.animation_time/1000;
       const angle = Math.sin( t );
       const light_position = Mat4.rotation( angle, [ 1,0,0 ] ).times( Vec.of( 0,-1,1,0 ) );
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
@@ -322,5 +341,6 @@ class World_Patch_Test extends Scene {
 }
 
 const Main_Scene = Single_Tree_Test;
+
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }

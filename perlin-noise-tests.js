@@ -225,7 +225,7 @@ class Grayscale_Grid extends Scene
 
 const Noise_Test_Scenes = { Grayscale_Grid, Height_Map_Test };
 
-export { Noise_Test_Scenes, defs }
+export { Noise_Test_Scenes, Height_Map }
 
 
 
