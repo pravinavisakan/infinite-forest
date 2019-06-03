@@ -229,7 +229,7 @@ class LSystemPlant extends Shape
 const ForestPatch =  
 class ForestPatch 
 {
-	constructor(type, density, heights){
+	constructor(type, density, heights, scaleFactor = 30) {
 		
 		//create grammar object, and retrieve a symbol mapping for this patch of trees
 
@@ -250,12 +250,12 @@ class ForestPatch
 		// store this tree with a transform with which to draw it, in an array 
 
 		this.trees = [];
+		this.scaleFactor = scaleFactor;
 		let counter = 0; //to limit vertices considered
 		const step = 40;
-		const scale = 30; //TODO make this less magic
 
 		let transform = Mat4.identity();
-		for (let row of heights ){
+		/*for (let row of heights ){
 			for(let height of row){
 
 				// increment and check counter
@@ -279,19 +279,38 @@ class ForestPatch
 			}
 
 			//update transform - new row
-			transform = transform.times(Mat4.translation([0,0,scale/row.length]));
-		}
+		transform = transform.times(Mat4.translation([0,0,scale/heights.length]));
+		}*/
 
+		// iterate over input height_map's positions to generate trees
+		for(let point of heights.arrays.position){
+				// increment and check counter
+				counter += 1;
+				if(counter != step)
+				{
+					continue;
+				}
+				counter = 0;
+
+				const checkExpression = (Math.random() < density);
+				const temp_transform = Mat4.translation([point[0]*this.scaleFactor, point[1]*this.scaleFactor, point[2]*this.scaleFactor]);
+
+				if(checkExpression){
+					const symbols = grammar.calcString(starter, Math.floor(type * 5)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
+					this.trees.push({tree: new LSystemPlant(generatedMapping, symbols), tree_transform: temp_transform});
+				}
+
+		}
 
 
 	}
 
-	draw(context, program_state, model_transform, material){
+draw(context, program_state, model_transform, material){
 		// draw all the trees generated at construction
 
 		for (let {tree, tree_transform} of this.trees)
 		{
-			tree.draw(context, program_state, model_transform.times(tree_transform), material);
+			tree.draw(context, program_state, model_transform.times(tree_transform).times(Mat4.rotation(Math.PI/2, [1,0,0])).times(Mat4.translation([0,-0.25,0])), material);
 		}
 
 	}

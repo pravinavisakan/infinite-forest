@@ -259,7 +259,7 @@ class World_Patch_Test extends Scene {
 	  const plant_type = 0.5;
 	  const plant_density = 0.3;
 
-	  this.shapes.forestA = new ForestPatch(plant_type, plant_density, final_heightsA);
+	  this.shapes.forestA = new ForestPatch(plant_type, plant_density, this.shapes.height_mapA);
 
       // misc materials
 
@@ -296,11 +296,13 @@ class World_Patch_Test extends Scene {
       this.box.draw( context, program_state, model_transform, this.materials.plastic ); 
 
       // display trees above that land
+	
+      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
       this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
       
 
 
-      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
+      //model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
       // display a patch of terrain/land
       model_transform.post_multiply( Mat4.scale([30,30,30]));
       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
