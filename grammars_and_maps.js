@@ -1,4 +1,4 @@
-import {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranchFunctions} from './tree_shapes.js';
+import {insertBranchFunctions, insertLeafFunctions, insertFruitFunctions, insertFlowerFunctions, branchOutFunctions, endBranchFunctions} from './tree_shapes.js';
 
 //INFO
 // File for the rules of grammars and symbol maps for use with L System Plant Rendering
@@ -43,5 +43,31 @@ const testBinarySymbolMapping = {
 }
 genericSymbolMaps.push(testBinarySymbolMapping);
 startSymbols.push("0");
+
+// FRUIT TREES - rules, and a test symbol map
+const fruitRules = new Map([
+    [ "1", [ ["11", 1.] ] ],
+    [ "L", [ ["1[L]L", .5] ] ],
+    [ "L", [ ["1[F]R", .25] ] ],
+    [ "L", [ ["1[R]F", .25] ] ],
+    [ "F", [ ["1[F]F", .5] ] ],
+    [ "F", [ ["1[F]R", .25] ] ],
+    [ "F", [ ["1[R]F", .25] ] ],
+    [ "R", [ ["1[R]R", 1.] ] ],
+    [ "[", [ ["[", 1.] ] ],
+    [ "]", [ ["]", 1.] ] ]
+]);
+rules.push(fruitRules);
+
+const testFruitSymbolMapping = {
+    "1":insertBranchFunctions,
+    "L":insertLeafFunctions,
+    "F":insertFlowerFunctions,
+    "R":insertFruitFunctions,
+    "[":branchOutFunctions,
+    "]":endBranchFunctions,
+}
+genericSymbolMaps.push(testFruitSymbolMapping);
+startSymbols.push("L");
 
 export {rules, genericSymbolMaps, startSymbols}
