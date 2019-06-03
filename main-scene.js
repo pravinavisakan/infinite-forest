@@ -180,26 +180,26 @@ class Single_Tree_Test extends Scene
   display( context, program_state )
   {
 
-      // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-      if( !context.scratchpad.controls ) 
-      {
-          // Add a movement controls panel to the page:
-          this.children.push( context.scratchpad.controls = new defs.Movement_Controls() ); 
+    // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+    if( !context.scratchpad.controls ) 
+    {
+	  // Add a movement controls panel to the page:
+	  this.children.push( context.scratchpad.controls = new defs.Movement_Controls() ); 
 
-          // Define the global camera and projection matrices, which are stored in program_state.  The camera
-          // matrix follows the usual format for transforms, but with opposite values (cameras exist as 
-          // inverted matrices).  The projection matrix follows an unusual format and determines how depth is 
-          // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
-          // orthographic() automatically generate valid matrices for one.  The input arguments of
-          // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
-          program_state.set_camera( Mat4.look_at( Vec.of( 0,10,20 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
-          this.initial_camera_location = program_state.camera_inverse;
-          program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
-      }
+	  // Define the global camera and projection matrices, which are stored in program_state.  The camera
+	  // matrix follows the usual format for transforms, but with opposite values (cameras exist as 
+	  // inverted matrices).  The projection matrix follows an unusual format and determines how depth is 
+	  // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
+	  // orthographic() automatically generate valid matrices for one.  The input arguments of
+	  // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
+	  program_state.set_camera( Mat4.look_at( Vec.of( 0,10,20 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+	  this.initial_camera_location = program_state.camera_inverse;
+	  program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
+    }
 
-      // Find how much time has passed in seconds; we can use
-      // time as an input when calculating new transforms:
-      const t = program_state.animation_time / 1000;
+    // Find how much time has passed in seconds; we can use
+    // time as an input when calculating new transforms:
+    const t = program_state.animation_time / 1000;
 
 
     const angle = Math.sin( t );
@@ -213,6 +213,10 @@ class Single_Tree_Test extends Scene
 	this.plant.draw(context, program_state, model_transform, this.materials.combo);
 
 	//this.obj.draw(context, program_state, model_transform.times(Mat4.translation([0,-4,0])), this.materials.plastic);
+
+	//this.box.draw( context, program_state, model_transform, this.materials.plastic);
+
+	//this.obj.draw(context, program_state, model_transform, this.materials.plastic);
       
   }
 
@@ -321,6 +325,70 @@ class World_Patch_Test extends Scene {
     }
 }
 
-const Main_Scene = World_Patch_Test;
+class Single_Obj_Test extends Scene {
+    constructor() {
+      super();
+      this.box = new Cube();
+      this.leaf1 = new Obj_Loader_Shape("assets/leaf1.obj");
+      this.leaf2 = new Obj_Loader_Shape("assets/leaf2.obj");
+      this.leaf3 = new Obj_Loader_Shape("assets/leaf3.obj");
+      this.leaf4 = new Obj_Loader_Shape("assets/leaf4.obj");
+      this.branch1 = new Obj_Loader_Shape("assets/branch1.obj");
+      this.branch2 = new Obj_Loader_Shape("assets/branch2.obj");
+      this.branch3 = new Obj_Loader_Shape("assets/branch3.obj");
+      this.fruit1 = new Obj_Loader_Shape("assets/fruit1.obj");
+      this.fruit2 = new Obj_Loader_Shape("assets/fruit2.obj");
+      this.flower1 = new Obj_Loader_Shape("assets/flower1.obj");
+      this.flower2 = new Obj_Loader_Shape("assets/flower2.obj");
+
+      // misc materials
+
+      const phong_shader = new defs.Phong_Shader  (2);
+      const combo_shader = new defs.Combined_Shape_Shader(2);     
+      this.materials = { plastic: new Material( phong_shader, 
+                         { ambient: 0.5, diffusivity: 0.7, specularity: 1, color: Color.of( 0.627451,0.321569,0.176471,1 ) } ),
+                         combo : new Material( combo_shader, { ambient: 1, diffusivity: 1, specularity: 0, color: Color.of( 1,.5,1,1 ) } ) };        
+    }
+
+    display(context, program_state) {
+                           // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+      if( !context.scratchpad.controls ) 
+        {                       // Add a movement controls panel to the page:
+          this.children.push( context.scratchpad.controls = new defs.Movement_Controls() ); 
+
+                    // Define the global camera and projection matrices, which are stored in program_state.  The camera
+                    // matrix follows the usual format for transforms, but with opposite values (cameras exist as 
+                    // inverted matrices).  The projection matrix follows an unusual format and determines how depth is 
+                    // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
+                    // orthographic() automatically generate valid matrices for one.  The input arguments of
+                    // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
+          program_state.set_camera( Mat4.look_at( Vec.of( 80,50,70 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+          this.initial_camera_location = program_state.camera_inverse;
+          program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
+        }
+
+      const t = this.t = program_state.animation_time/1000;
+      const angle = Math.sin( t );
+      const light_position = Mat4.rotation( angle, [ 1,0,0 ] ).times( Vec.of( 0,-1,1,0 ) );
+      program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
+
+      let model_transform = Mat4.identity();
+      this.box.draw( context, program_state, Mat4.identity().times(Mat4.scale([0.2, 0.2, 0.2])), this.materials.plastic ); 
+
+      this.leaf1.draw(context, program_state, model_transform.times(Mat4.translation([3,0,0])), this.materials.plastic);
+      this.leaf2.draw(context, program_state, model_transform.times(Mat4.translation([6,0,0])), this.materials.plastic);
+      this.leaf3.draw(context, program_state, model_transform.times(Mat4.translation([9,0,0])), this.materials.plastic);
+      this.leaf4.draw(context, program_state, model_transform.times(Mat4.translation([12,0,0])), this.materials.plastic);
+      this.branch1.draw(context, program_state, model_transform.times(Mat4.translation([15,0,0])), this.materials.plastic);
+      this.branch2.draw(context, program_state, model_transform.times(Mat4.translation([18,0,0])), this.materials.plastic);
+      this.branch3.draw(context, program_state, model_transform.times(Mat4.translation([21,0,0])), this.materials.plastic);
+      this.fruit1.draw(context, program_state, model_transform.times(Mat4.translation([24,0,0])), this.materials.plastic);
+      this.fruit2.draw(context, program_state, model_transform.times(Mat4.translation([27,0,0])), this.materials.plastic);
+      this.flower1.draw(context, program_state, model_transform.times(Mat4.translation([30,0,0])), this.materials.plastic);
+      this.flower2.draw(context, program_state, model_transform.times(Mat4.translation([33,0,0])), this.materials.plastic);
+    }
+}
+
+const Main_Scene = Single_Obj_Test;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
