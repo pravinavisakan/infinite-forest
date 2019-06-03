@@ -180,23 +180,28 @@ class Solar_System extends Scene
     let model_transform = object.model_transform.copy();
     let modelview_matrix = camera_inverse.post_multiply(model_transform);
     let object_location = modelview_matrix.times(Vec.of(0,0,0,1)); // object centered at origin
+    let radius_in_model_space = Vec.of(object.radius, 0, 0);
+    let object_radius = modelview_matrix.times(radius_in_model_space);
     //console.log(object_location)
 
     // If there is a more efficient way, I cannot think of it right now.
+    let normals = []
 
-    let near_normal = this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] );
-    let far_normal = this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] );
-    let right_normal = this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] );
-    let left_normal = this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] );
-    let top_normal = this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] );
-    let bottom_normal = this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] );
+    normals.push( this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] ) );
 
-    let near_d = this.set3Points_get_d( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] );
-    let far_d = this.set3Points_get_d( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] );
-    let right_d = this.set3Points_get_d( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] );
-    let left_d = this.set3Points_get_d( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] );
-    let top_d = this.set3Points_get_d( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] );
-    let bottom_d = this.set3Points_get_d( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] );
+    let d_values = []
+
+    d_values.push( this.set3Points_get_d( normals[0], frustum_corner_points[0] ) );
+    d_values.push( this.set3Points_get_d( normals[1], frustum_corner_points[5] ) );
+    d_values.push( this.set3Points_get_d( normals[2], frustum_corner_points[1] ) );
+    d_values.push( this.set3Points_get_d( normals[3], frustum_corner_points[4] ) );
+    d_values.push( this.set3Points_get_d( normals[4], frustum_corner_points[2] ) );
+    d_values.push( this.set3Points_get_d( normals[5], frustum_corner_points[1] ) );
 
    
 
@@ -212,7 +217,7 @@ class Solar_System extends Scene
 // object is a Mat4, I think. how can I grab the position of the object? If it is Mat4, then it should be in the 4th column.
 
 
-    let is_inside_frustum = false; // by default we put false.
+    let is_inside_frustum = true; // by default we put true.
     // 
 
 
@@ -226,11 +231,16 @@ class Solar_System extends Scene
 
     }
 */
+    // get object's relationship to each plane
+    for (let i = 0; i < 6; i++) {
+      if (normals[i].dot(object_location) + d_values[i] - 300*object_radius[0] > 0) {
+        is_inside_frustum = false;
+        break;
+      }
+    }
 
 
-    return true; // for now
-
-    // return is_inside_frustum
+    return is_inside_frustum
   }
 
 
@@ -242,20 +252,20 @@ class Solar_System extends Scene
 
     let normal_vectorp = vectorp_1.cross(vectorp_2); // cross product. this gives the normal vector, or (a, b, c) in the equation.
     
-     //console.log(normal_vectorp);
+    // console.log(normal_vectorp);
     // console.log(normal_vectorp.normalized());
 
     return normal_vectorp; // RETURN A VEC3.
   }
 
-    set3Points_get_d( v1, v2, v3)
+    set3Points_get_d( n, p )
   {
-    let normal_vectorp = this.set3Points_get_n(v1, v2, v3);
+    let normal_vectorp = n;
     
      //console.log(normal_vectorp);
      //console.log(normal_vectorp.normalized());
 
-    let d = -1 * normal_vectorp.dot(v1); // dot product. gives a SCALAR.
+    let d = -1 * normal_vectorp.dot(p); // dot product. gives a SCALAR.
     return d; // RETURN A SCALAR.
   }
 
@@ -378,70 +388,70 @@ class Solar_System extends Scene
 
 // I'm going to try drawing a frustum using the Trapezoid class. let's hope this goes well!
 
-      let near_fplane_transform = new_camera_transform.copy().times(Mat4.translation( [0, 0, -2]));
-      // let near_fplane_transform = Mat4.identity();
+//       let near_fplane_transform = new_camera_transform.copy().times(Mat4.translation( [0, 0, -2]));
+//       // let near_fplane_transform = Mat4.identity();
 
-      this.shapes.square.draw ( context, program_state, near_fplane_transform, this.materials.plastic.override( yellow_glass ) );
-
-
-      let far_fplane_transform = near_fplane_transform.copy();
-      var NEAR_FAR_FPLANE_DIST = 100
-       // var NEAR_FAR_FPLANE_DIST = 20 + Math.sin(2 * t) * 5;
-
-      var NEAR_FPLANE_SCALE = 1;
-      var FAR_FPLANE_SCALE = 20;
-
-      var NEAR_FAR_FPLANE_SDIFF = FAR_FPLANE_SCALE - NEAR_FPLANE_SCALE;
-
-      far_fplane_transform = far_fplane_transform.times(Mat4.translation( [0, 0, -NEAR_FAR_FPLANE_DIST ] ))
-                                                 .times(Mat4.rotation( Math.PI , [1, 0, 0] ));
-
-      this.shapes.square.draw (context, program_state, far_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE, FAR_FPLANE_SCALE, 1 ] ) ),
-                               this.materials.plastic.override( yellow_glass ) );
+//       this.shapes.square.draw ( context, program_state, near_fplane_transform, this.materials.plastic.override( yellow_glass ) );
 
 
-      let right_fplane_transform = near_fplane_transform.copy();
-      right_fplane_transform = right_fplane_transform.times(Mat4.translation( [NEAR_FAR_FPLANE_SDIFF/2 + NEAR_FPLANE_SCALE, 0, -NEAR_FAR_FPLANE_DIST / 2] ))
-                                                     .times(Mat4.rotation( Math.PI / 2 - Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [0, 1, 0] ))
-                                                     .times(Mat4.rotation( Math.PI / 2, [0, 0, 1] ));
+//       let far_fplane_transform = near_fplane_transform.copy();
+//       var NEAR_FAR_FPLANE_DIST = 100
+//        // var NEAR_FAR_FPLANE_DIST = 20 + Math.sin(2 * t) * 5;
 
-      this.shapes.trapezoid.draw (context, program_state, right_fplane_transform.times(Mat4.scale( [FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1])),
-                               this.materials.plastic.override( yellow_glass ));
+//       var NEAR_FPLANE_SCALE = 1;
+//       var FAR_FPLANE_SCALE = 20;
 
+//       var NEAR_FAR_FPLANE_SDIFF = FAR_FPLANE_SCALE - NEAR_FPLANE_SCALE;
 
-      let left_fplane_transform = near_fplane_transform.copy();
-      left_fplane_transform = left_fplane_transform.times(Mat4.translation( [-NEAR_FAR_FPLANE_SDIFF/2 - NEAR_FPLANE_SCALE, 0, -NEAR_FAR_FPLANE_DIST / 2] ))
-                                                     .times(Mat4.rotation( -Math.PI / 2 + Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [0, 1, 0] ))
-                                                     .times(Mat4.rotation( -Math.PI / 2, [0, 0, 1] ));
+//       far_fplane_transform = far_fplane_transform.times(Mat4.translation( [0, 0, -NEAR_FAR_FPLANE_DIST ] ))
+//                                                  .times(Mat4.rotation( Math.PI , [1, 0, 0] ));
 
-      this.shapes.trapezoid.draw (context, program_state, left_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1])),
-                               this.materials.plastic.override( yellow_glass ));
+//       this.shapes.square.draw (context, program_state, far_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE, FAR_FPLANE_SCALE, 1 ] ) ),
+//                                this.materials.plastic.override( yellow_glass ) );
 
 
+//       let right_fplane_transform = near_fplane_transform.copy();
+//       right_fplane_transform = right_fplane_transform.times(Mat4.translation( [NEAR_FAR_FPLANE_SDIFF/2 + NEAR_FPLANE_SCALE, 0, -NEAR_FAR_FPLANE_DIST / 2] ))
+//                                                      .times(Mat4.rotation( Math.PI / 2 - Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [0, 1, 0] ))
+//                                                      .times(Mat4.rotation( Math.PI / 2, [0, 0, 1] ));
 
-      let top_fplane_transform = near_fplane_transform.copy();
-      top_fplane_transform = top_fplane_transform.times(Mat4.translation( [0, NEAR_FAR_FPLANE_SDIFF/2 + NEAR_FPLANE_SCALE, -NEAR_FAR_FPLANE_DIST / 2] ))
-                                                     .times(Mat4.rotation( -Math.PI / 2 + Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [1, 0, 0] ))
-                                                     .times(Mat4.rotation( Math.PI, [0, 0, 1]))
-
-      this.shapes.trapezoid.draw (context, program_state, top_fplane_transform.times(Mat4.scale( [FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1] )), 
-                                this.materials.plastic.override( yellow_glass));
+//       this.shapes.trapezoid.draw (context, program_state, right_fplane_transform.times(Mat4.scale( [FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1])),
+//                                this.materials.plastic.override( yellow_glass ));
 
 
-      let bottom_fplane_transform = near_fplane_transform.copy();
-      bottom_fplane_transform = bottom_fplane_transform.times(Mat4.translation( [0, -NEAR_FAR_FPLANE_SDIFF/2 - NEAR_FPLANE_SCALE, -NEAR_FAR_FPLANE_DIST / 2] ))
-                                                     .times(Mat4.rotation( Math.PI / 2 - Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [1, 0, 0] ))
+//       let left_fplane_transform = near_fplane_transform.copy();
+//       left_fplane_transform = left_fplane_transform.times(Mat4.translation( [-NEAR_FAR_FPLANE_SDIFF/2 - NEAR_FPLANE_SCALE, 0, -NEAR_FAR_FPLANE_DIST / 2] ))
+//                                                      .times(Mat4.rotation( -Math.PI / 2 + Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [0, 1, 0] ))
+//                                                      .times(Mat4.rotation( -Math.PI / 2, [0, 0, 1] ));
+
+//       this.shapes.trapezoid.draw (context, program_state, left_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1])),
+//                                this.materials.plastic.override( yellow_glass ));
+
+
+
+//       let top_fplane_transform = near_fplane_transform.copy();
+//       top_fplane_transform = top_fplane_transform.times(Mat4.translation( [0, NEAR_FAR_FPLANE_SDIFF/2 + NEAR_FPLANE_SCALE, -NEAR_FAR_FPLANE_DIST / 2] ))
+//                                                      .times(Mat4.rotation( -Math.PI / 2 + Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [1, 0, 0] ))
+//                                                      .times(Mat4.rotation( Math.PI, [0, 0, 1]))
+
+//       this.shapes.trapezoid.draw (context, program_state, top_fplane_transform.times(Mat4.scale( [FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1] )), 
+//                                 this.materials.plastic.override( yellow_glass));
+
+
+//       let bottom_fplane_transform = near_fplane_transform.copy();
+//       bottom_fplane_transform = bottom_fplane_transform.times(Mat4.translation( [0, -NEAR_FAR_FPLANE_SDIFF/2 - NEAR_FPLANE_SCALE, -NEAR_FAR_FPLANE_DIST / 2] ))
+//                                                      .times(Mat4.rotation( Math.PI / 2 - Math.atan( NEAR_FAR_FPLANE_SDIFF / NEAR_FAR_FPLANE_DIST), [1, 0, 0] ))
                                                      
 
-      this.shapes.trapezoid.draw (context, program_state, bottom_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1] )), 
-                                this.materials.plastic.override( yellow_glass));
+//       this.shapes.trapezoid.draw (context, program_state, bottom_fplane_transform.times(Mat4.scale( [ FAR_FPLANE_SCALE/2, NEAR_FAR_FPLANE_DIST/2, 1] )), 
+//                                 this.materials.plastic.override( yellow_glass));
 
 
 
-      const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [1, 1, -1], [1, 1, -1],
-                                             [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
+//       const view_box_normalized = Vec.cast ( [-1, -1, -1], [1, -1, -1], [1, 1, -1], [1, 1, -1],
+//                                              [-1, -1, 1],  [1, -1, 1],  [-1, 1, 1], [1, 1, 1]  );
 
-      const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
+//       const frustum_corner_points = this.derive_frustum_points_from_matrix( program_state.projection_transform, view_box_normalized);
 
 /*
 for (let k = 0; k < 6; k++)
@@ -452,10 +462,10 @@ for (let k = 0; k < 6; k++)
     }
   }
 */
-      var aFrustum = new Frustum();
+//       var aFrustum = new Frustum();
 
-      aFrustum.set_frustum_coords(frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2], frustum_corner_points[3],
-                                  frustum_corner_points[4], frustum_corner_points[5], frustum_corner_points[6], frustum_corner_points[7]);
+//       aFrustum.set_frustum_coords(frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2], frustum_corner_points[3],
+//                                   frustum_corner_points[4], frustum_corner_points[5], frustum_corner_points[6], frustum_corner_points[7]);
 
 
 // Curses... I ran into a problem. To fix it, I will no longer be able to adjust the angle of the field of view.
@@ -480,7 +490,7 @@ for (let k = 0; k < 6; k++)
         }
       }
 
-      //console.log(objects_drawn);
+      console.log(objects_drawn);
 
 
       // ***** BEGIN TEST SCENE *****               
