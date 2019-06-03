@@ -11,6 +11,8 @@ const rules = [];
 const genericSymbolMaps = [];
 const startSymbols = [];
 
+
+
 // ALGAE - rules, and a test symbol map 
 const algaeRules = new Map([
     [ "A", [ ["AB", 1.] ] ],
@@ -23,8 +25,9 @@ const testAlgaeSymbolMapping = {
     "B":insertBranchFunctions,
 }
 genericSymbolMaps.push(testAlgaeSymbolMapping);
-
 startSymbols.push("A");
+
+
 
 // BINARY TREES - rules, and a test symbol map
 const binaryRules = new Map([
@@ -43,5 +46,32 @@ const testBinarySymbolMapping = {
 }
 genericSymbolMaps.push(testBinarySymbolMapping);
 startSymbols.push("0");
+
+
+
+// BARNSLEY FERN - rules, and a test symbol map
+const barnsleyRules = new Map([
+    [ "X", [ ["F+[[X]-X]-F[-FX]+X", 1.] ] ], // 
+    [ "F", [ ["FF", .1] ] ], 
+    [ "+", [ ["+", .1] ] ],  // turn right 25 deg
+    [ "-", [ ["-", 1.] ] ], // turn left 25 deg
+    [ "[", [ ["[", 1.] ] ], // 
+    [ "]", [ ["]", 1.] ] ]  //
+]);
+rules.push(barnsleyRules);
+
+const testBarnsleySymbolMapping = {
+    "X":controlGrowthFunctions,
+    "F":drawForwardFunctions,
+    "+":turn25DegRightFunctions,
+    "-":turn25DegLeftFunctions,
+    "[":saveStateFunctions,
+    "]":restoreStateFunctions,
+}
+genericSymbolMaps.push(testBarnsleySymbolMapping);
+startSymbols.push("X");
+
+
+
 
 export {rules, genericSymbolMaps, startSymbols}
