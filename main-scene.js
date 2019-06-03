@@ -20,8 +20,10 @@ import {Noise_Grid, Noise_Generator} from './perlin-noise.js'
 // pull rules, maps, and noise test scenes into this namespace
 const Algae =  rules[0];
 const Binary = rules[1];
+const Fruit = rules[2];
 const AlgaeMap = genericSymbolMaps[0];
 const BinaryMap = genericSymbolMaps[1];
+const FruitMap = genericSymbolMaps[2];
 
 const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
 const { cCube } = colored_shapes_defs;
@@ -156,22 +158,33 @@ class Single_Tree_Test extends Scene
 
 	// An example rendering of a single plant, using a test mapping and binary tree rules
 
-	const binaryGrammar = new LSystemGrammar(Binary);
+	//const binaryGrammar = new LSystemGrammar(Binary);
+	const fruitGrammar = new LSystemGrammar(Fruit);
 
-	const testString = binaryGrammar.calcString("0",2);
+	//const testString = binaryGrammar.calcString("0",2);
+	const testString = fruitGrammar.calcString("L",5);
 	//const testString = "1111";
 
 	// crude generation of a mapping from symbols to shape insertion functions
 
-	const generatedBinaryMap = {};
+	//const generatedBinaryMap = {};
+	const generatedFruitMap = {};
 
-	for( let symbol in BinaryMap )
+	/*for( let symbol in BinaryMap )
 	{
 		const len = BinaryMap[symbol].length;
 		generatedBinaryMap[symbol] = BinaryMap[symbol][len-1];
+	} */  
+
+	for( let symbol in FruitMap )
+	{
+		const len = FruitMap[symbol].length;
+		
+		generatedFruitMap[symbol] = FruitMap[symbol][Math.floor(Math.random() * len)];
 	}   
 
-    this.plant = new LSystemPlant(generatedBinaryMap, testString);
+    //this.plant = new LSystemPlant(generatedBinaryMap, testString);
+    this.plant = new LSystemPlant(generatedFruitMap, testString);
 
     //test obj file load 
     //this.obj = new Obj_Loader_Shape("assets/leaf1.obj");

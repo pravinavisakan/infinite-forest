@@ -76,10 +76,10 @@ const blue = Color.of(0.1, 0.6, 0.95, 1);
 const darkred = Color.of(0.96, 0.08, 0.12, 1);
 
 // a simple box branch
-insertBranchFunctions.push(insertShape(cCube, [brown],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])));
+//insertBranchFunctions.push(insertShape(cCube, [brown],undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0])));
 
 // a simple tetrahedron leaf
-insertLeafFunctions.push(insertShape(cTetrahedron, [green],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])));
+//insertLeafFunctions.push(insertShape(cTetrahedron, [green],undefined, Mat4.translation([0,0,0]), Mat4.translation([0,0,0])));
 
 // a simple branch out that rotates 45 degrees to the left, along z
 branchOutFunctions.push(branchOut(Math.PI/4, Vec.of(0,0,1)));
@@ -106,7 +106,7 @@ insertLeafFunctions.push(insertObj("assets/leaf4.obj",undefined, Mat4.translatio
 insertBranchFunctions.push(insertObj("assets/branch1.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), brown));
 
 // adds an insertion function for custom branch 2, to be used in plant generation later
-insertBranchFunctions.push(insertObj("assets/branch2.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), brown));
+//insertBranchFunctions.push(insertObj("assets/branch2.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), brown));
 
 // adds an insertion function for custom branch 3, to be used in plant generation later
 insertBranchFunctions.push(insertObj("assets/branch3.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), brown));
@@ -120,11 +120,11 @@ insertFlowerFunctions.push(insertObj("assets/flower2.obj",undefined, Mat4.transl
 
 
 // adds an insertion function for custom fruit 1, to be used in plant generation later
-insertFruitFunctions.push(insertObj("assets/fruit1.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), blue));
+insertFruitFunctions.push(insertObj("assets/fruit1.obj",undefined, Mat4.translation([0,1,0]).times(Mat4.rotation( 90, [1,0,0] )), Mat4.translation([0,1,0]), blue));
 
 // adds an insertion function for custom fruit 2, to be used in plant generation later
-insertFruitFunctions.push(insertObj("assets/fruit2.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), darkred));
+insertFruitFunctions.push(insertObj("assets/fruit2.obj",undefined, Mat4.translation([0,1,0]).times(Mat4.rotation( 90, [1,0,0] )).times(Mat4.scale([0.2, 0.2, 0.2])), Mat4.translation([0,1,0]), darkred));
 
 
 // exports
-export {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranchFunctions}
+export {insertBranchFunctions, insertLeafFunctions, insertFlowerFunctions, insertFruitFunctions, branchOutFunctions, endBranchFunctions}
