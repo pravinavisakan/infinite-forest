@@ -321,6 +321,6 @@ class World_Patch_Test extends Scene {
     }
 }
 
-const Main_Scene = World_Patch_Test;
+const Main_Scene = Single_Tree_Test;
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }

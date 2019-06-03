@@ -19,8 +19,8 @@ const algaeRules = new Map([
 rules.push(algaeRules);
 
 const testAlgaeSymbolMapping = {
-    "A":insertLeafFunctions,
-    "B":insertBranchFunctions,
+    "A":insertBranchFunctions,
+    "B":branchOutFunctions,
 }
 genericSymbolMaps.push(testAlgaeSymbolMapping);
 

@@ -188,7 +188,7 @@ class LSystemPlant extends Shape
 
 
 		// another temp to make variables apply correctly
-		const points_transform = transform.times(shape_transformation);
+		const points_transform = transform;//.times(shape_transformation);
       //applies transform to vertices and copies into plant shape (from insert function)
 		this.indices.push( ...temp_shape.indices.map( i => i + this.arrays.position.length ) );
                                               // Copy each array from temp_shape into the recipient shape:
@@ -210,7 +210,7 @@ class LSystemPlant extends Shape
       }
 
       //setup left from original
-      this.normalize_positions( false );
+      //this.normalize_positions( false );
       this.readyCount-=1;
     }
 
