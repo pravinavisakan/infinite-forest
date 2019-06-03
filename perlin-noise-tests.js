@@ -47,7 +47,7 @@ class Noise_Demo extends Shape {
     }
 }
 
-class Height_Map extends Shape {
+defs.Height_Map = class Height_Map extends Shape {
     constructor(rows, columns, heights, texture_coord_range = [ [ 0, (rows-1) ], [ 0, (columns-1) ] ]) {
         super("position", "normal", "texture_coord")
 

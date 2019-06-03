@@ -1,7 +1,9 @@
 import {tiny} from './common.js';
 const { Vec, Mat, Mat4, Color, Light, Shape, Shader, Material, Texture,
          Scene, Canvas_Widget, Code_Widget, Text_Widget } = tiny;
-         
+
+// for tree generation
+import {rules, genericSymbolMaps, startSymbols} from './grammars_and_maps.js';         
 //INFO
 // This file contains our classes for implementing L-System Plant Generation, with some examples
 
@@ -223,10 +225,97 @@ class LSystemPlant extends Shape
 
 //TODO A class that creates a bunch of LSystemPlants given a symbol map, a grammar, a set of heights, 
 // maybe perlin noise data for density and type
+// NOTE: is not actually a shape - it contains an array of shapes and translations, and when draw is called, is displays them
 const ForestPatch =  
-class ForestPatch extends Shape
+class ForestPatch 
 {
+	constructor(type, density, heights, scaleFactor = 30) {
+		
+		//create grammar object, and retrieve a symbol mapping for this patch of trees
 
+		const scaled_type = ((type + 1)/2);
+		const scaled_density = ((density + 1)/2);
+		const grammar_index = Math.floor(scaled_type * rules.length); //theoretically, the length of rules and mappings should be the same
+
+		const grammar = new LSystemGrammar(rules[grammar_index]);
+		const starter = startSymbols[grammar_index];
+		const genericMap = genericSymbolMaps[grammar_index];
+		const generatedMapping = {};
+
+		for( let symbol in genericMap )
+		{
+			const len = genericMap[symbol].length;
+			generatedMapping[symbol] = genericMap[symbol][Math.floor(Math.random()*scaled_type*len) % len]; //use the type parameter and a little randomness to select the shape insertion functions
+		}
+
+		//iterate over heights, create a tree for every other point if a random value is below provided density
+		// store this tree with a transform with which to draw it, in an array 
+
+		this.trees = [];
+		this.scaleFactor = scaleFactor;
+		let counter = 0; //to limit vertices considered
+		const step = 40;
+
+		let transform = Mat4.identity();
+		/*for (let row of heights ){
+			for(let height of row){
+
+				// increment and check counter
+				counter += 1;
+				if(counter != step)
+				{
+					continue;
+				}
+				counter = 0;
+
+				const checkExpression = (Math.random() < density);
+				const temp_transform = transform.times(Mat4.translation([0,height*scale,0]));
+
+				if(checkExpression){
+					const symbols = grammar.calcString(starter, Math.floor(type * 5)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
+					this.trees.push({tree: new LSystemPlant(generatedMapping, symbols), tree_transform: temp_transform});
+				}
+
+				// update transform - new point along row
+				transform = transform.times(Mat4.translation([scale/row.length,0,0]));
+			}
+
+			//update transform - new row
+		transform = transform.times(Mat4.translation([0,0,scale/heights.length]));
+		}*/
+
+		// iterate over input height_map's positions to generate trees
+		for(let point of heights.arrays.position){
+				// increment and check counter
+				counter += 1;
+				if(counter != step)
+				{
+					continue;
+				}
+				counter = 0;
+
+				const checkExpression = (Math.random() < scaled_density);
+				const temp_transform = Mat4.translation([point[0]*this.scaleFactor, point[1]*this.scaleFactor, point[2]*this.scaleFactor]);
+
+				if(checkExpression){
+					const symbols = grammar.calcString(starter, Math.floor(type * 5)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
+					this.trees.push({tree: new LSystemPlant(generatedMapping, symbols), tree_transform: temp_transform});
+				}
+
+		}
+
+
+	}
+
+draw(context, program_state, model_transform, material){
+		// draw all the trees generated at construction
+
+		for (let {tree, tree_transform} of this.trees)
+		{
+			tree.draw(context, program_state, model_transform.times(tree_transform).times(Mat4.rotation(Math.PI/2, [1,0,0])).times(Mat4.translation([0,-0.25,0])), material);
+		}
+
+	}
 }
 
 export {LSystemGrammar, LSystemPlant, ForestPatch }

@@ -7,21 +7,24 @@ import {insertBranchFunctions, insertLeafFunctions, branchOutFunctions, endBranc
 // to be inserted, instead of a given shape insertion function. This will allow easier auto-generation in ForestPatch
 
 //exports
-const rules = {};
-const genericSymbolMaps = {};
+const rules = [];
+const genericSymbolMaps = [];
+const startSymbols = [];
 
 // ALGAE - rules, and a test symbol map 
 const algaeRules = new Map([
     [ "A", [ ["AB", 1.] ] ],
     [ "B", [ ["A", 1.] ] ]
 ]);
-rules.Algae = algaeRules;
+rules.push(algaeRules);
 
 const testAlgaeSymbolMapping = {
     "A":insertLeafFunctions,
     "B":insertBranchFunctions,
 }
-genericSymbolMaps.AlgaeMap = testAlgaeSymbolMapping;
+genericSymbolMaps.push(testAlgaeSymbolMapping);
+
+startSymbols.push("A");
 
 // BINARY TREES - rules, and a test symbol map
 const binaryRules = new Map([
@@ -30,7 +33,7 @@ const binaryRules = new Map([
     [ "[", [ ["[", 1.] ] ], // aka a constant
     [ "]", [ ["]", 1.] ] ]
 ]);
-rules.Binary = binaryRules;
+rules.push(binaryRules);
 
 const testBinarySymbolMapping = {
     "1":insertBranchFunctions,
@@ -38,6 +41,7 @@ const testBinarySymbolMapping = {
     "[":branchOutFunctions,
     "]":endBranchFunctions,
 }
-genericSymbolMaps.BinaryMap = testBinarySymbolMapping;
+genericSymbolMaps.push(testBinarySymbolMapping);
+startSymbols.push("0");
 
-export {rules, genericSymbolMaps}
+export {rules, genericSymbolMaps, startSymbols}
