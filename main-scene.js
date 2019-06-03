@@ -12,20 +12,20 @@ import { Noise_Grid, Noise_Generator } from './perlin-noise.js'
 // (Can define Main_Scene's class here)
 
 
-var spatialHashTable = {}; 
-var CELL_SIZE = 50;
+// var spatialHashTable = {}; 
+// var CELL_SIZE = 50;
 
-spatialHashTable.add = function(obj)
-  {
-      var X = Math.round(obj.x / CELL_SIZE) * CELL_SIZE;
-      var Y = Math.round(obj.y / CELL_SIZE) * CELL_SIZE;
-      var key = X + "," + Y;
-      if(spatialHashTable[key] == undefined)
-        {
-          spatialHashTable[key] = []
-        }
-      spatialHashTable[key].push(obj)
-  }
+// spatialHashTable.add = function(obj)
+//   {
+//       var X = Math.round(obj.x / CELL_SIZE) * CELL_SIZE;
+//       var Y = Math.round(obj.y / CELL_SIZE) * CELL_SIZE;
+//       var key = X + "," + Y;
+//       if(spatialHashTable[key] == undefined)
+//         {
+//           spatialHashTable[key] = []
+//         }
+//       spatialHashTable[key].push(obj)
+//   }
 
 
 const Main_Scene =
