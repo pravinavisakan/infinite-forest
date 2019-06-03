@@ -221,6 +221,7 @@ class Single_Tree_Test extends Scene
 class World_Patch_Test extends Scene {
     constructor() {
       super();
+      this.box = new Cube();
       
       // construct two chunks of land
       this.noiseGen = new Noise_Generator(50);
@@ -292,13 +293,14 @@ class World_Patch_Test extends Scene {
       program_state.lights = [ new Light( light_position, Color.of(1,1,1,1), 1000000 ) ];
 
       let model_transform = Mat4.identity();
+      this.box.draw( context, program_state, model_transform, this.materials.plastic ); 
 
       // display trees above that land
       this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
       
 
-      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
 
+      model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
       // display a patch of terrain/land
       model_transform.post_multiply( Mat4.scale([30,30,30]));
       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.plastic );   
