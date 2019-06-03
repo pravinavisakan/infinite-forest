@@ -239,19 +239,19 @@ class Terrain extends Scene
                        };
 
       // perlin noise
-      this.noiseGen = new Noise_Generator(50);
-      this.patch_rows = 10; // number of patches in a row
-      this.patch_columns = 10;
-      this.patch_size = 10; // length/width of a single patch
+      this.noiseGen = new Noise_Generator(100);
+      this.patch_rows = 4; // number of patches in a row
+      this.patch_columns = 5; // number of patches in a column
+      this.patch_size = 20; // length/width of a single patch
 
       // height map level 1
-      let scale1 = 2;
+      let scale1 = 1; // 6
       let var1 = 2;
       let grid1 = new Noise_Grid(this.patch_rows*this.patch_size,this.patch_columns*this.patch_size,var1,this.noiseGen);
       let heights1 = grid1.noise.map(a => a.map(b => (b+1)*scale1));
 
 	  // height map level 2
-	  let scale2 = 1;
+	  let scale2 = 0;
 	  let var2 = 4;
 	  let grid2 = new Noise_Grid(this.patch_rows*this.patch_size,this.patch_columns*this.patch_size,var2,this.noiseGen);
 	  let heights2 = grid2.noise.map(a => a.map(b => (b+1)*scale2));
@@ -259,16 +259,16 @@ class Terrain extends Scene
 	  let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]));
       // array of height map objects
       this.height_maps = []
-      let start_row = 0;
+      let start_row = 0; // for indexing the final_heights array
       let start_col = 0;
       let temp = []
       for (let r=0; r < this.patch_rows; r++) {
       	for (let c=0; c < this.patch_columns; c++) {
       		// subset the heights arrays
-      		temp = final_heights.slice(start_row, start_row+this.patch_size)
+      		temp = final_heights.slice(start_row, start_row+this.patch_size) // subset rows
       		let curr_heights = []
       		for (let i=0; i < this.patch_size; i++) {
-				curr_heights.push(temp[i].slice(start_col, start_col+this.patch_size))
+				curr_heights.push(temp[i].slice(start_col, start_col+this.patch_size)) // subset columns
       		}
       		 
 			this.height_maps.push(new Height_Map(this.patch_size, this.patch_size, curr_heights))
@@ -287,7 +287,6 @@ class Terrain extends Scene
     generate_test_grid()
     {
       let test_grid_transform = Mat4.identity();
-      test_grid_transform = test_grid_transform.times(Mat4.translation( [-1, 10, -1] ));
 
       for (let r=0; r < this.patch_rows; r++)
       {
@@ -298,11 +297,11 @@ class Terrain extends Scene
 
               // instead of drawing all the objects, store their radius and position
               let object_radius = Math.sqrt(2); // max distance from center of object, in model space
-              this.object_container.push({shape  : this.height_maps[r*10 + c], 
+              this.object_container.push({shape  : this.height_maps[r*this.patch_columns + c], 
                                           radius : object_radius, 
                                           model_transform : test_grid_transform.copy()})
             }
-            test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -10, 0] ) );
+            test_grid_transform = test_grid_transform.times(Mat4.translation( [0, -this.patch_columns, 0] ) );
       }
 
 
@@ -425,15 +424,18 @@ class Terrain extends Scene
 
       // iterate through all objects
       // if the object is in the frustum, draw it
+      let objects_drawn = 0;
       let total_objects = this.object_container.length;
       for (let i=0; i < total_objects; i++) {
         let object = this.object_container[i];
         // we check to see if the object is inside frustum. If true, then draw object.
         if (this.inside_frustum(object, program_state)) {
           object.shape.draw(context, program_state, object.model_transform, this.materials.dirt);
+          objects_drawn++;
         }
       }
 
+	console.log(objects_drawn)
     }
 }
 const Main_Scene = Terrain;
