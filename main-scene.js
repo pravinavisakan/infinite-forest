@@ -24,13 +24,8 @@ const AlgaeMap = genericSymbolMaps[0];
 const BinaryMap = genericSymbolMaps[1];
 
 const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
-const { Algae, Binary } = rules;
-const { AlgaeMap, BinaryMap } = genericSymbolMaps;
 const { cCube } = colored_shapes_defs;
 
-// perlin noise imports
-import { Noise_Grid, Noise_Generator } from './perlin-noise.js';
-const {Height_Map} = noise_defs;
 
 // useful variables
 //const leaf_pre_transform = Mat4.rotation(Math.PI/2, );
@@ -304,16 +299,9 @@ class World_Patch_Test extends Scene {
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
 
-      const t = this.t = program_state.animation_time/1000;
-                                                                      // Find how much time has passed in seconds; we can use
-                                                                      // time as an input when calculating new transforms:
 
 
       const blue = Color.of( 0,0,.5,1 ), yellow = Color.of( .5,.5,0,1 ), yellow_glass = Color.of( 1, 1, 0, 0.4 );
-
-                                    // Variable model_transform will be a local matrix value that helps us position shapes.
-                                    // It starts over as the identity every single frame - coordinate axes at the origin.
-      let model_transform = Mat4.identity(); 
 
    	  const t = this.t = program_state.animation_time/1000;
       const angle = Math.sin( t );
@@ -340,7 +328,7 @@ class World_Patch_Test extends Scene {
     }
 }
 
-const Main_Scene = Single_Tree_Test;
+const Main_Scene = World_Patch_Test;
 
 const Additional_Scenes = [];
 export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }

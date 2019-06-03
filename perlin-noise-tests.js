@@ -47,7 +47,7 @@ class Noise_Demo extends Shape {
     }
 }
 
-defs.Height_Map = class Height_Map extends Shape {
+const Height_Map = defs.Height_Map = class Height_Map extends Shape {
     constructor(rows, columns, heights, texture_coord_range = [ [ 0, (rows-1) ], [ 0, (columns-1) ] ]) {
         super("position", "normal", "texture_coord")
 
@@ -225,7 +225,7 @@ class Grayscale_Grid extends Scene
 
 const Noise_Test_Scenes = { Grayscale_Grid, Height_Map_Test };
 
-export { Noise_Test_Scenes, Height_Map }
+export { Noise_Test_Scenes, Height_Map, defs }
 
 
 
