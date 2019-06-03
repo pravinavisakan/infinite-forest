@@ -161,7 +161,7 @@ class Single_Tree_Test extends Scene
 	const fruitGrammar = new LSystemGrammar(Fruit);
 
 	//const testString = binaryGrammar.calcString("0",2);
-	const testString = fruitGrammar.calcString("L",2);
+	const testString = fruitGrammar.calcString("L",5);
 	//const testString = "1111";
 
 	// crude generation of a mapping from symbols to shape insertion functions
@@ -178,7 +178,8 @@ class Single_Tree_Test extends Scene
 	for( let symbol in FruitMap )
 	{
 		const len = FruitMap[symbol].length;
-		generatedFruitMap[symbol] = FruitMap[symbol][len-1];
+		
+		generatedFruitMap[symbol] = FruitMap[symbol][Math.floor(Math.random() * len)];
 	}   
 
     //this.plant = new LSystemPlant(generatedBinaryMap, testString);
