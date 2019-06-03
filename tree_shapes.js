@@ -87,6 +87,12 @@ endBranchFunctions.push(endBranch(-Math.PI/4, Vec.of(0,0,1)));
 // post Mat4.scale([20,20,20]).times(Mat4.translation([0,0,0])))
 insertLeafFunctions.push(insertObj("assets/leaf1.obj",undefined, Mat4.translation([0,1,0]), Mat4.translation([0,1,0]), green));
 
+// a simple branchOut that rotates 25 degrees to the left, along z
+branchOutFunctions.push(branchOut(25 * (Math.PI / 180), Vec.of(0,0,1)))
+
+// a sinmple branchOut that rotates 25 degrees to the right, along z
+branchOutFunctions.push(branchOut(-25 * (Math.PI / 180), Vec.of(0,0,1)))
+
 
 
 // exports

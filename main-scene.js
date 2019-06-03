@@ -17,8 +17,10 @@ import {Combined_Shapes_Test} from './custom-shaders.js'
 // pull rules, maps, and noise test scenes into this namespace
 const Algae =  rules[0];
 const Binary = rules[1];
+const Barnsley = rules[2];
 const AlgaeMap = genericSymbolMaps[0];
 const BinaryMap = genericSymbolMaps[1];
+const BarnsleyMap = genericSymbolMaps[2];
 
 const { Grayscale_Grid, Height_Map_Test } = Noise_Test_Scenes;
 

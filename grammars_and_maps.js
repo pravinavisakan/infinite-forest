@@ -62,11 +62,11 @@ rules.push(barnsleyRules);
 
 const testBarnsleySymbolMapping = {
     "X":controlGrowthFunctions,
-    "F":drawForwardFunctions,
-    "+":turn25DegRightFunctions,
-    "-":turn25DegLeftFunctions,
-    "[":saveStateFunctions,
-    "]":restoreStateFunctions,
+    "F":insertBranchFunctions,
+    "+":branchOutFunctions,
+    "-":branchOutFunctions,
+    "[":branchOutFunctions,
+    "]":branchOutFunctions,
 }
 genericSymbolMaps.push(testBarnsleySymbolMapping);
 startSymbols.push("X");
