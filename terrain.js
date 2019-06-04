@@ -258,6 +258,7 @@ class Terrain extends Scene
 	console.log(objects_drawn)
     }
 }
-const Main_Scene = Terrain;
-const Additional_Scenes = [];
-export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
+// const Main_Scene = Terrain;
+// const Additional_Scenes = [];
+// export { Main_Scene, Additional_Scenes, Canvas_Widget, Code_Widget, Text_Widget, defs }
+export { Terrain }

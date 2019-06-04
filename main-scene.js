@@ -16,7 +16,8 @@ import {Height_Map} from './perlin-noise-tests.js'
 import {Combined_Shapes_Test} from './custom-shaders.js'
 import {colored_shapes_defs} from './colored-shapes.js'
 import {Noise_Grid, Noise_Generator} from './perlin-noise.js'
-
+//import {Terrain} from './terrain.js'
+ 
 // pull rules, maps, and noise test scenes into this namespace
 const Algae =  rules[0];
 const Binary = rules[1];
@@ -240,7 +241,7 @@ class World_Patch_Test extends Scene {
       // construct two chunks of land
       this.noiseGen = new Noise_Generator(50);
 
-      this.patch_rows = 4; // number of patches in a row
+      this.patch_rows = 5; // number of patches in a row
       this.patch_columns = 5; // number of patches in a column
       this.patch_size = 20; // length/width of a single patch
       this.grid_rows=this.patch_rows*this.patch_size;
@@ -390,12 +391,12 @@ class World_Patch_Test extends Scene {
 
     let normals = []
 
-    normals.push( this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] ) );
-    normals.push( this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] ) );
-    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] ) );
-    normals.push( this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] ) );
-    normals.push( this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] ) );
-    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] ) );
+    normals.push( this.set3Points_get_n( frustum_corner_points[0], frustum_corner_points[1], frustum_corner_points[2] ).normalized() );
+    normals.push( this.set3Points_get_n( frustum_corner_points[5], frustum_corner_points[4], frustum_corner_points[7] ).normalized() );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[5], frustum_corner_points[3] ).normalized() );
+    normals.push( this.set3Points_get_n( frustum_corner_points[4], frustum_corner_points[0], frustum_corner_points[6] ).normalized() );
+    normals.push( this.set3Points_get_n( frustum_corner_points[2], frustum_corner_points[3], frustum_corner_points[6] ).normalized() );
+    normals.push( this.set3Points_get_n( frustum_corner_points[1], frustum_corner_points[0], frustum_corner_points[5] ).normalized() );
 
     let d_values = []
 
@@ -412,7 +413,7 @@ class World_Patch_Test extends Scene {
     for (let i = 0; i < 6; i++) {
       // tbh, not sure why we have to scale up the object radius.
       // I just know the shapes at the edges don't get drawn if we follow the formula that makes more sense...
-      let correction_factor = 1;
+      let correction_factor = 300;
       let test = correction_factor*object_radius[0];
       if (normals[i].dot(object_location) + d_values[i] - test > 0) {
         is_inside_frustum = false;
@@ -455,13 +456,11 @@ class World_Patch_Test extends Scene {
                     // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
                     // orthographic() automatically generate valid matrices for one.  The input arguments of
                     // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
-          program_state.set_camera( Mat4.look_at( Vec.of( 80,50,70 ), Vec.of( 0,0,0 ), Vec.of( 0,1,0 ) ) );
+          program_state.set_camera( Mat4.look_at( Vec.of( -10,10,7 ), Vec.of( 20,20,-20 ), Vec.of( 0,1,0 ) ) );
 
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
         }
-
-
 
       const blue = Color.of( 0,0,.5,1 ), yellow = Color.of( .5,.5,0,1 ), yellow_glass = Color.of( 1, 1, 0, 0.4 );
 
@@ -473,45 +472,23 @@ class World_Patch_Test extends Scene {
       let model_transform = Mat4.identity();
       this.box.draw( context, program_state, model_transform, this.materials.plastic ); 
 
-      
-      /* this works. this is what we started with. It draws trees in two rows above land. 
-      however, I don't want to keep this exact order of transformations because I want to draw land first,
-      since the height_map model_transforms are stored with the height_maps */
-//       model_transform.post_multiply( Mat4.rotation( -Math.PI/2, [1,0,0] ) );
-//       this.shapes.forestA.draw(context, program_state, model_transform, this.materials.combo);
-//       model_transform.post_multiply( Mat4.scale([30,30,30]));
-//       this.shapes.height_mapA.draw( context, program_state, model_transform, this.materials.dirt );   
-
-      /* this works, sort of. all the trees get drawn in one row at the edge of the patch */
-//       model_transform.post_multiply( Mat4.scale([30,30,30]));
-//       this.height_maps[0].draw(context,program_state, model_transform, this.materials.dirt);
-//       model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
-// 	  this.forests[0].draw(context, program_state, model_transform, this.materials.combo);    
-  
-      // this also works.
-      //model_transform = this.object_container[0].object_transform.copy();
-      //model_transform.post_multiply( Mat4.scale([30,30,30]));
-      //this.height_maps[0].draw(context,program_state, model_transform, this.materials.dirt);
-      //model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
-	  //this.forests[0].draw(context, program_state, model_transform, this.materials.combo);
-
       // iterate through all objects
       // if the object is in the frustum, draw it
-      let patches_drawn = 0;
+      //let patches_drawn = 0;
       let total_objects = this.object_container.length;
       for (let i=0; i < total_objects; i++) {
         let object = this.object_container[i];
         let forest = this.forests[i];
         model_transform = object.object_transform.copy();
         // we check to see if the object is inside frustum. If true, then draw object.
-        if (this.inside_frustum(object, program_state)) {
+        if (true) { // this.inside_frustum(object, program_state)) {
           object.shape.draw(context, program_state, model_transform, this.materials.dirt);
           model_transform.post_multiply( Mat4.scale([1/30,1/30,1/30]));
           forest.draw(context, program_state, model_transform, this.materials.combo);
-          patches_drawn++;
+          //patches_drawn++;
         }
       }
-	console.log(patches_drawn)
+	//console.log(patches_drawn)
     }
 }
 
