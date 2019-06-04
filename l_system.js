@@ -234,7 +234,7 @@ class ForestPatch
 		//create grammar object, and retrieve a symbol mapping for this patch of trees
 
 		const scaled_type = ((type + 1)/2);
-		const scaled_density = ((density + 1)/2);
+		const scaled_density = ((density + 1)/2)-Math.random()*0.5;
 		const grammar_index = Math.floor(scaled_type * rules.length); //theoretically, the length of rules and mappings should be the same
 
 		const grammar = new LSystemGrammar(rules[grammar_index]);
@@ -254,7 +254,7 @@ class ForestPatch
 		this.trees = [];
 		this.scaleFactor = scaleFactor;
 		let counter = 0; //to limit vertices considered
-		const step = 40;
+		let step = Math.floor(Math.random()*31 + 37);
 
 		let transform = Mat4.identity();
 		/*for (let row of heights ){
@@ -293,11 +293,13 @@ class ForestPatch
 					continue;
 				}
 				counter = 0;
+				
 
 				const checkExpression = (Math.random() < scaled_density);
 				const temp_transform = Mat4.translation([point[0]*this.scaleFactor, point[1]*this.scaleFactor, point[2]*this.scaleFactor]);
 
 				if(checkExpression){
+					step = Math.floor(Math.random()*31 + 37);
 					const symbols = grammar.calcString(starter, Math.floor(scaled_type * 5)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
 					this.trees.push({tree: new LSystemPlant(generatedMapping, symbols), tree_transform: temp_transform});
 				}
