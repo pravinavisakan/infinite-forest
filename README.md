@@ -15,5 +15,5 @@ Also, despite our best efforts to store shapes in as few buffers as possible, th
 
 Brandon: l-system grammars, shape modeling
 Pravin: l-system, obj file rendering
-Erynn: perlin noise
+Erynn: perlin noise, height map generation
 Matthew: frustum culling

@@ -250,31 +250,25 @@ class World_Patch_Test extends Scene {
       this.grid_columns=this.patch_rows*this.patch_size;
 
       // level 1
-      let scale1 = 0.5;
+      let scale1 = .9;
       let var1 = 2;
       let grid1 = new Noise_Grid(this.grid_rows,this.grid_columns,var1,this.noiseGen);
       let heights1 = grid1.noise.map(a => a.map(b => b*scale1));
 
       // level 2
-      let scale2 = 0.05;
+      let scale2 = 0.2;
       let var2 = 5;
       let grid2 = new Noise_Grid(this.grid_rows,this.grid_columns,var2,this.noiseGen);
       let heights2 = grid2.noise.map(a => a.map(b => b*scale2));
 
       // level 3
-      let scale3 = 0.01;
+      let scale3 = 0.04;
       let var3 = 25;
       let grid3 = new Noise_Grid(this.grid_rows,this.grid_columns,var3,this.noiseGen);
       let heights3 = grid3.noise.map(a => a.map(b => b*scale3));
 
       // combined height
       let final_heights = heights1.map((a,i) => a.map((b,j) => b+heights2[i][j]+heights3[i][j]));
-      // split into sub arrays
-      let final_heightsA = final_heights.slice(0,this.grid_rows/2+1);
-      let final_heightsB = final_heights.slice(this.grid_rows/2,this.grid_rows);
-
-	this.shapes = { 'height_mapA' : new Height_Map(this.grid_rows/2+1, this.grid_columns, final_heightsA),
-			  		'height_mapB' : new Height_Map(this.grid_rows/2, this.grid_columns, final_heightsB)}; 
 
       // construct a chunk of forest
 	
@@ -288,8 +282,6 @@ class World_Patch_Test extends Scene {
 
       const plant_type = gridT.noise[0][0];
       const plant_density = gridD.noise[0][0];
-
-      this.shapes.forestA = new ForestPatch(plant_type, plant_density, this.shapes.height_mapA);
 
       // misc materials
 
@@ -458,7 +450,7 @@ class World_Patch_Test extends Scene {
                     // treated when projecting 3D points onto a plane.  The Mat4 functions perspective() and
                     // orthographic() automatically generate valid matrices for one.  The input arguments of
                     // perspective() are field of view, aspect ratio, and distances to the near plane and far plane.          
-          program_state.set_camera( Mat4.look_at( Vec.of( -10,10,7 ), Vec.of( 20,20,-20 ), Vec.of( 0,1,0 ) ) );
+          program_state.set_camera( Mat4.look_at( Vec.of( 0,15,0 ), Vec.of( 20,10,-20 ), Vec.of( 0,1,0 ) ) );
 
           this.initial_camera_location = program_state.camera_inverse;
           program_state.projection_transform = Mat4.perspective( Math.PI/4, context.width/context.height, 1, 200 );
