@@ -163,8 +163,10 @@ class Single_Tree_Test extends Scene
 	const fruitGrammar = new LSystemGrammar(Fruit);
 
 	//const testString = binaryGrammar.calcString("0",2);
-	const testString = fruitGrammar.calcString("L",5);
+	const testString = fruitGrammar.calcString("L",2);
 	//const testString = "1111";
+
+	console.log(testString);
 
 	// crude generation of a mapping from symbols to shape insertion functions
 

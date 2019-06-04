@@ -245,7 +245,7 @@ class ForestPatch
 		for( let symbol in genericMap )
 		{
 			const len = genericMap[symbol].length;
-			generatedMapping[symbol] = genericMap[symbol][Math.floor(Math.random()*scaled_type*len) % len]; //use the type parameter and a little randomness to select the shape insertion functions
+			generatedMapping[symbol] = genericMap[symbol][Math.floor(Math.random()/scaled_type*len) % len]; //use the type parameter and a little randomness to select the shape insertion functions
 		}
 
 		//iterate over heights, create a tree for every other point if a random value is below provided density
@@ -300,7 +300,7 @@ class ForestPatch
 
 				if(checkExpression){
 					step = Math.floor(Math.random()*31 + 37);
-					const symbols = grammar.calcString(starter, Math.floor(scaled_type * 5)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
+					const symbols = grammar.calcString(starter, Math.floor(scaled_type * 4)); // make a string with the defined start symbol, and of a iteration count calculated from type (with a magic number for now)
 					this.trees.push({tree: new LSystemPlant(generatedMapping, symbols), tree_transform: temp_transform});
 				}
 
